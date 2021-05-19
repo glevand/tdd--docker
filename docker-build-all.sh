@@ -7,9 +7,9 @@ script_name="${0##*/}"
 DOCKER_TOP=${DOCKER_TOP:-"$( cd "${BASH_SOURCE%/*}" && pwd )"}
 
 if [[ -n "${JENKINS_URL}" ]]; then
-	export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-"?"}):'
+	export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):'
 else
-	export PS4='\[\e[0;33m\]+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-"?"}):\[\e[0m\] '
+	export PS4='\[\e[0;33m\]+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):\[\e[0m\] '
 fi
 
 get_arch() {
