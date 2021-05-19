@@ -2,29 +2,37 @@
 
 usage () {
 	local old_xtrace
-	local old_xtrace="$(shopt -po xtrace || :)"
+	old_xtrace="$(shopt -po xtrace || :)"
 	set +o xtrace
-	echo "${script_name} - ${project_description}" >&2
-	echo "Usage: ${script_name} [flags]" >&2
-	echo "Option flags:" >&2
-	echo "  -p --purge    - Remove existing docker image and rebuild." >&2
-	echo "  -r --rebuild  - Rebuild existing docker image." >&2
-	echo "  -t --tag      - Print Docker tag to stdout and exit." >&2
-	echo "  -h --help     - Show this help and exit." >&2
-	echo "  -v --verbose  - Verbose execution." >&2
-	echo "  -g --debug    - Extra verbose execution." >&2
-	echo "  --install     - Install systemd service files." >&2
-	echo "  --start       - Start systemd services." >&2
-	echo "  --enable      - Enable systemd services." >&2
-	echo "Environment:" >&2
-	echo "  DOCKER_FILE   - Default: '${DOCKER_FILE}'" >&2
-	echo "  DOCKER_FROM   - Default: '${DOCKER_FROM}'" >&2
-	echo "  DOCKER_TAG    - Default: '${DOCKER_TAG}'" >&2
-	if [[ -n ${JENKINS_USER} ]];then
-	echo "  JENKINS_USER  - Default: '${JENKINS_USER}'" >&2
-	fi
-	echo "Examples:" >&2
-	echo "  ${script_name} -v"
+
+	{
+		echo "${script_name} - ${project_description}"
+		echo "Usage: ${script_name} [flags]"
+		echo "Option flags:"
+		echo "  -p --purge    - Remove existing docker image and rebuild."
+		echo "  -r --rebuild  - Rebuild existing docker image."
+		echo "  -t --tag      - Print Docker tag to stdout and exit."
+		echo "  -h --help     - Show this help and exit."
+		echo "  -v --verbose  - Verbose execution."
+		echo "  -g --debug    - Extra verbose execution."
+		echo "Systemd setup:"
+		echo "  --install     - Install systemd service files."
+		echo "  --start       - Start systemd services."
+		echo "  --enable      - Enable systemd services."
+		echo "Environment:"
+		echo "  DOCKER_FILE   - Default: '${DOCKER_FILE}'"
+		echo "  DOCKER_FROM   - Default: '${DOCKER_FROM}'"
+		echo "  DOCKER_TAG    - Default: '${DOCKER_TAG}'"
+		if [[ ${JENKINS_USER-} ]];then
+			echo "  JENKINS_USER  - Default: '${JENKINS_USER}'"
+		fi
+		echo "Examples:"
+		echo "  ${script_name} -v"
+		echo "Info:"
+		echo "  ${script_name} (@PACKAGE_NAME@) version @PACKAGE_VERSION@"
+		echo "  @PACKAGE_URL@"
+		echo "  Send bug reports to: Geoff Levand <geoff@infradead.org>."
+	} >&2
 
 	eval "${old_xtrace}"
 }
@@ -32,6 +40,16 @@ usage () {
 process_opts() {
 	local short_opts="prthvg"
 	local long_opts="purge,rebuild,tag,help,verbose,debug,install,start,enable"
+
+	purge=''
+	rebuild=''
+	tag=''
+	usage=''
+	verbose=''
+	debug=''
+	install=''
+	start=''
+	enable=''
 
 	local opts
 	opts=$(getopt --options ${short_opts} --long ${long_opts} -n "${script_name}" -- "$@")
@@ -82,15 +100,11 @@ process_opts() {
 			;;
 		--)
 			shift
-			if [[ "${1}" ]]; then
-				echo "${script_name}: ERROR: Got extra args: '${*}'" >&2
-				usage
-				exit 1
-			fi
+			extra_args="${*}"
 			break
 			;;
 		*)
-			echo "${script_name}: ERROR: Internal opts: '${@}'" >&2
+			echo "${script_name}: ERROR: Internal opts: '${*}'" >&2
 			exit 1
 			;;
 		esac
@@ -98,15 +112,29 @@ process_opts() {
 }
 
 on_exit() {
-	local result=${?}
+	local result=${1}
+	local sec="${SECONDS}"
 
-	if [[ -d "${tmp_dir}" ]]; then
-		rm -rf "${tmp_dir}"
+	if [[ -d "${tmp_dir:-}" ]]; then
+		if [[ ${keep_tmp_dir:-} ]]; then
+			echo "${script_name}: INFO: tmp dir preserved: '${tmp_dir}'" >&2
+		else
+			rm -rf "${tmp_dir:?}"
+		fi
 	fi
 
-	build_on_exit ${result}
+	build_on_exit "${result}"
 	set +x
-	echo "${script_name}: Done: ${result}" >&2
+	echo "${script_name}: Done: ${result}, ${sec} sec." >&2
+}
+
+on_err() {
+	local f_name=${1}
+	local line_no=${2}
+	local err_no=${3}
+
+	echo "${script_name}: ERROR: function=${f_name}, line=${line_no}, result=${err_no}" >&2
+	exit "${err_no}"
 }
 
 version () {
@@ -114,158 +142,226 @@ version () {
 }
 
 get_arch() {
-	local a=${1}
+	local arch
+	arch="${1:-$(uname -m)}"
 
-	case "${a}" in
-	arm64|aarch64) echo "arm64" ;;
-	amd64|x86_64)  echo "amd64" ;;
+	case "${arch}" in
+	arm64|aarch64)
+		echo "arm64"
+		;;
+	amd64|x86_64)
+		echo "amd64"
+		;;
 	*)
-		echo "${script_name}: ERROR: Bad arch '${a}'" >&2
+		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
 		exit 1
 		;;
 	esac
 }
 
 arch_tag() {
-	local a="$(get_arch $(uname -m))"
+	local arch
+	arch="$(get_arch "$(uname -m)")"
 
-	case "${a}" in
-		*)     echo "-${a}" ;;
+	case "${arch}" in
+	*)
+		echo "-${arch}"
+		;;
 	esac
 }
 
 docker_from_alpine() {
-	local a="$(get_arch $(uname -m))"
+	local arch
+	arch="$(get_arch "$(uname -m)")"
 
-	case "${a}" in
-		amd64) echo "alpine:latest" ;;
-		arm64) echo "arm64v8/alpine:latest" ;;
-		*)
-			echo "${script_name}: ERROR: Unknown arch ${a}" >&2
-			exit 1
-			;;
+	case "${arch}" in
+	amd64)
+		DOCKER_FROM="${DOCKER_FROM:-alpine:latest}"
+		;;
+	arm64)
+		DOCKER_FROM="${DOCKER_FROM:-arm64v8/alpine:latest}"
+		;;
+	*)
+		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
+		exit 1
+		;;
 	esac
 }
 
 docker_from_centos() {
-	local a="$(get_arch $(uname -m))"
+	local arch
+	arch="$(get_arch "$(uname -m)")"
 
-	case "${a}" in
-		amd64) echo "centos:8" ;;
-		arm64) echo "centos:8" ;;
-		*)
-			echo "${script_name}: ERROR: Unknown arch ${a}" >&2
-			exit 1
-			;;
+	case "${arch}" in
+	amd64)
+		DOCKER_FROM="${DOCKER_FROM:-centos:8}"
+		;;
+	arm64)
+		DOCKER_FROM="${DOCKER_FROM:-centos:8}"
+		;;
+	*)
+		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
+		exit 1
+		;;
 	esac
 }
 
 docker_from_debian() {
-	local a="$(get_arch $(uname -m))"
+	local arch
+	arch="$(get_arch "$(uname -m)")"
 
-	case "${a}" in
-		amd64) echo "debian:buster" ;;
-		arm64) echo "arm64v8/debian:buster" ;;
-		*)
-			echo "${script_name}: ERROR: Unknown arch ${a}" >&2
-			exit 1
-			;;
+	case "${arch}" in
+	amd64)
+		DOCKER_FROM="${DOCKER_FROM:-debian:buster}"
+		;;
+	arm64)
+		DOCKER_FROM="${DOCKER_FROM:-arm64v8/debian:buster}"
+		;;
+	*)
+		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
+		exit 1
+		;;
 	esac
 }
 
 docker_from_debian_jessie() {
-	local a="$(get_arch $(uname -m))"
+	local arch
+	arch="$(get_arch "$(uname -m)")"
 
-	case "${a}" in
-		amd64) echo "debian:jessie" ;;
-		*)
-			echo "${script_name}: ERROR: Unknown arch ${a}" >&2
-			exit 1
-			;;
+	case "${arch}" in
+	amd64)
+		DOCKER_FROM="${DOCKER_FROM:-debian:jessie}"
+		;;
+	*)
+		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
+		exit 1
+		;;
+	esac
+}
+
+docker_from_i386_debian() {
+	local arch
+	arch="$(get_arch "$(uname -m)")"
+
+	case "${arch}" in
+	amd64)
+		DOCKER_FROM="${DOCKER_FROM:-i386/debian:buster}"
+		;;
+	*)
+		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
+		exit 1
+		;;
 	esac
 }
 
 docker_from_jenkins() {
-	local a="$(get_arch $(uname -m))"
+	local arch
+	arch="$(get_arch "$(uname -m)")"
 
-	case "${a}" in
-		amd64) echo "jenkins/jenkins:lts" ;;
-		arm64)
-			echo "arm64 not available"
-			exit 1
-			;;
-		*)
-			echo "${script_name}: ERROR: Unknown arch ${a}" >&2
-			exit 1
-			;;
+	case "${arch}" in
+	amd64)
+		DOCKER_FROM="${DOCKER_FROM:-jenkins/jenkins:lts}"
+		;;
+	arm64)
+		echo "arm64 not available"
+		exit 1
+		;;
+	*)
+		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
+		exit 1
+		;;
 	esac
 }
 
 docker_from_openjdk() {
-	local a="$(get_arch $(uname -m))"
+	local arch
+	arch="$(get_arch "$(uname -m)")"
 
-	case "${a}" in
-		amd64) echo "openjdk:8-jdk" ;;
-		arm64) echo "arm64v8/openjdk:8-jdk" ;;
-		*)
-			echo "${script_name}: ERROR: Unknown arch ${a}" >&2
-			exit 1
-			;;
+	case "${arch}" in
+	amd64)
+		DOCKER_FROM="${DOCKER_FROM:-openjdk:8-jdk}"
+		;;
+	arm64)
+		DOCKER_FROM="${DOCKER_FROM:-arm64v8/openjdk:8-jdk}"
+		;;
+	*)
+		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
+		exit 1
+		;;
 	esac
 }
 
 docker_from_opensuse() {
-	local a="$(get_arch $(uname -m))"
+	local arch
+	arch="$(get_arch "$(uname -m)")"
 
-	case "${a}" in
-		amd64) echo "opensuse/leap:15.1" ;;
-		arm64) echo "arm64v8/opensuse/leap:15.1" ;;
-		*)
-			echo "${script_name}: ERROR: Unknown arch ${a}" >&2
-			exit 1
-			;;
+	case "${arch}" in
+	amd64)
+		DOCKER_FROM="${DOCKER_FROM:-opensuse/leap:15.1}"
+		;;
+	arm64)
+		DOCKER_FROM="${DOCKER_FROM:-arm64v8/opensuse/leap:15.1}"
+		;;
+	*)
+		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
+		exit 1
+		;;
 	esac
 }
 
 docker_from_ubuntu() {
-	local a="$(get_arch $(uname -m))"
+	local arch
+	arch="$(get_arch "$(uname -m)")"
 
-	case "${a}" in
-		amd64) echo "ubuntu:18.04" ;;
-		arm64) echo "arm64v8/ubuntu:18.04" ;;
-		*)
-			echo "${script_name}: ERROR: Unknown arch ${a}" >&2
-			exit 1
-			;;
+	case "${arch}" in
+	amd64)
+		DOCKER_FROM="${DOCKER_FROM:-ubuntu:18.04}"
+		;;
+	arm64)
+		DOCKER_FROM="${DOCKER_FROM:-arm64v8/ubuntu:18.04}"
+		;;
+	*)
+		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
+		exit 1
+		;;
 	esac
 }
 
-docker_from() {
+set_docker_from() {
 	local from=${1}
-	local tag
 
 	case "${from}" in
 	alpine)
-		tag=$(docker_from_alpine);;
+		docker_from_alpine
+		;;
 	centos)
-		tag=$(docker_from_centos);;
+		docker_from_centos
+		;;
 	debian)
-		tag=$(docker_from_debian);;
+		docker_from_debian
+		;;
 	debian_jessie)
-		tag=$(docker_from_debian_jessie);;
+		docker_from_debian_jessie
+		;;
+	i386_debian)
+		docker_from_i386_debian
+		;;
 	jenkins)
-		tag=$(docker_from_jenkins);;
+		docker_from_jenkins
+		;;
 	openjdk)
-		tag=$(docker_from_openjdk);;
+		docker_from_openjdk
+		;;
 	opensuse)
-		tag=$(docker_from_opensuse);;
+		docker_from_opensuse
+		;;
 	ubuntu)
-		tag=$(docker_from_ubuntu);;
+		docker_from_ubuntu
+		;;
 	*)
 		echo "${script_name}: ERROR: Bad project_from: '${from}'" >&2
 		exit 1
 	esac
-	echo "${tag}"
 }
 
 show_tag () {
@@ -279,9 +375,18 @@ else
 	export PS4='\[\e[0;33m\]+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):\[\e[0m\] '
 fi
 
-trap "on_exit 'Failed.'" EXIT
+SECONDS=0
+# start_time="$(date +%Y.%m.%d-%H.%M.%S)"
 
-if [[ ${TDD_BUILDER} && "${project_name}" == "builder"  ]]; then
+trap "on_exit 'Failed'" EXIT
+trap 'on_err ${FUNCNAME[0]:-main} ${LINENO} ${?}' ERR
+trap 'on_err SIGUSR1 ? 3' SIGUSR1
+
+set -eE
+set -o pipefail
+set -o nounset
+
+if [[ ${TDD_BUILDER-} && "${project_name}" == "builder"  ]]; then
 	echo "${script_name}: ERROR: Building builder in builder not supported." >&2
 	exit 1
 fi
@@ -295,7 +400,7 @@ SERVICE_FILE="${SERVICE_FILE:-${PROJECT_TOP}/tdd-${project_name}.service}"
 
 process_opts "${@}"
 
-DOCKER_FROM="${DOCKER_FROM:-$(docker_from "${project_from}")}"
+set_docker_from "${project_from}"
 
 if [[ ${usage} ]]; then
 	usage
@@ -332,7 +437,7 @@ do_build=1
 
 if [[ ${purge} ]] && docker inspect --type image "${DOCKER_TAG}" &>/dev/null; then
 	echo "Removing docker image: ${DOCKER_TAG}" >&2
-	docker rmi --force ${DOCKER_TAG}
+	docker rmi --force "${DOCKER_TAG}"
 elif [[ ! ${rebuild} ]] && docker inspect --type image "${DOCKER_TAG}" &>/dev/null; then
 	echo "Docker image exists: ${DOCKER_TAG}" >&2
 	do_build=
@@ -351,12 +456,10 @@ if [[ ${do_build} ]]; then
 
 	docker build \
 		--file "${DOCKER_FILE}" \
-		--build-arg DOCKER_FROM=${DOCKER_FROM} \
-		--build-arg http_proxy=${http_proxy} \
-		--build-arg https_proxy=${https_proxy} \
-		--tag ${DOCKER_TAG} \
+		--build-arg DOCKER_FROM="${DOCKER_FROM}" \
+		--tag "${DOCKER_TAG}" \
 		--network=host \
-		${extra_build_args} \
+		"${extra_build_args}" \
 		.
 fi
 
@@ -372,7 +475,7 @@ if [[ -f ${SERVICE_FILE} ]]; then
 
 		cp -f "${SERVICE_FILE}" "${tmp_file}"
 		sed --in-place "s/@@docker-tag@@/${DOCKER_TAG}/g" "${tmp_file}"
-		sudo cp -f ${tmp_file} /etc/systemd/system/
+		sudo cp -f "${tmp_file}" "/etc/systemd/system/"
 	fi
 
 	if [[ ${enable} ]]; then
