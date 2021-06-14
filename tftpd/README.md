@@ -7,16 +7,18 @@ A framework for test driven Linux software development.
 ### Install Service
 
 To build, install and start the TDD tftpd service use the
-[build-tftpd.sh](docker/tftpd/build-tftpd.sh) script:
+[build-tftpd.sh](https://github.com/glevand/tdd--docker/blob/master/tftpd/build-tftpd.sh)
+script:
 
 ```sh
 sudo mkdir -p /var/tftproot
 docker/tftpd/build-tftpd.sh --purge --install --enable --start
 ```
 
-Once the [build-tftpd.sh](docker/tftpd/build-tftpd.sh) script has
-completed the status of the tdd-tftpd.service can be checked with commands
-like these:
+Once the
+[build-tftpd.sh](https://github.com/glevand/tdd--docker/blob/master/tftpd/build-tftpd.sh)
+script has completed the status of the tdd-tftpd.service can be checked with
+commands like these:
 
 ```sh
 docker ps
