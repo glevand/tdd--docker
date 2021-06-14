@@ -41,16 +41,6 @@ process_opts() {
 	local short_opts="prthvg"
 	local long_opts="purge,rebuild,tag,help,verbose,debug,install,start,enable"
 
-	purge=''
-	rebuild=''
-	tag=''
-	usage=''
-	verbose=''
-	debug=''
-	install=''
-	start=''
-	enable=''
-
 	local opts
 	opts=$(getopt --options ${short_opts} --long ${long_opts} -n "${script_name}" -- "$@")
 
@@ -398,6 +388,18 @@ DOCKER_TAG="${DOCKER_TAG:-${DOCKER_NAME}:${VERSION}${ARCH_TAG}}"
 DOCKER_FILE="${DOCKER_FILE:-${PROJECT_TOP}/Dockerfile.${project_name}}"
 SERVICE_FILE="${SERVICE_FILE:-${PROJECT_TOP}/tdd-${project_name}.service}"
 
+purge=''
+rebuild=''
+tag=''
+usage=''
+verbose=''
+debug=''
+install=''
+start=''
+enable=''
+extra_build_args=''
+
+
 process_opts "${@}"
 
 set_docker_from "${project_from}"
@@ -459,7 +461,7 @@ if [[ ${do_build} ]]; then
 		--build-arg DOCKER_FROM="${DOCKER_FROM}" \
 		--tag "${DOCKER_TAG}" \
 		--network=host \
-		"${extra_build_args}" \
+		${extra_build_args:+${extra_build_args}} \
 		.
 fi
 
