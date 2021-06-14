@@ -9,26 +9,30 @@ A framework for test driven Linux software development.
 Although not required, to ease system setup and maintenece it is recommended to
 add a host system Jenkins user with the same user and group names and id values
 as those of the Jenkins user in the Jenkins container.  The
-[useradd-jenkins.sh](scripts/useradd-jenkins.sh) script can be used to do this.
+[useradd-jenkins.sh](https://github.com/glevand/tdd-project/blob/master/scripts/useradd-jenkins.sh)
+script can be used to do this.
 
 If a host system Jenkins user other than the default is used the `JENKINS_USER`
 environment variable must be set when calling the
-[build-jenkins.sh](docker/jenkins/build-jenkins.sh) or
-[docker-build-all.sh](docker/docker-build-all.sh) scripts.
-
+[build-jenkins.sh](https://github.com/glevand/tdd--docker/blob/master/jenkins/build-jenkins.sh)
+or
+[docker-build-all.sh](https://github.com/glevand/tdd--docker/blob/master/docker-build-all.sh)
+scripts.
 
 ### Install Service
 
 To build, install and start the TDD Jenkins service use the
-[build-jenkins.sh](docker/jenkins/build-jenkins.sh) script:
+[build-jenkins.sh](https://github.com/glevand/tdd--docker/blob/master/jenkins/build-jenkins.sh)
+script:
 
 ```sh
 docker/jenkins/build-jenkins.sh --purge --install --enable --start
 ```
 
-Once the [build-jenkins.sh](docker/jenkins/build-jenkins.sh) script has
-completed the status of the tdd-jenkins.service can be checked with commands
-like these:
+Once the
+[build-jenkins.sh](https://github.com/glevand/tdd--docker/blob/master/jenkins/build-jenkins.sh)
+script has completed the status of the tdd-jenkins.service can be checked with
+commands like these:
 
 ```sh
 docker ps
@@ -41,11 +45,11 @@ server:
 
     JENKINS_URL=http://${server_addr}:8080
 
-To complete the installation, using a web browser navigate to the `${JENKINS_URL}`.
-A series of 'Getting' Started dialogs will need to be completed.  The
-`Unlock Jenkins` dialog should be displayed first.  On startup Jenkins will have
-output the required `Administrator password` to the systemd journal.  Use
-commands like these to retrieve it:
+To complete the installation, using a web browser navigate to the
+`${JENKINS_URL}`.  A series of 'Getting' Started dialogs will need to be
+completed.  The `Unlock Jenkins` dialog should be displayed first.  On startup
+Jenkins will have output the required `Administrator password` to the systemd
+journal.  Use commands like these to retrieve it:
 
 ```sh
 sudo journalctl -u tdd-jenkins.service --boot --pager-end
@@ -61,7 +65,7 @@ Once the 'Getting Started' dialogs are complete the
 `Please create new jobs to get started` message is presented.  To create the
 TDD jobs navigate to the `${JENKINS_URL}/script` page. Copy and paste
 the contents of the
-[jenkins/job-setup/job-setup.groovy](jenkins/job-setup/job-setup.groovy)
+[jenkins/job-setup/job-setup.groovy](https://github.com/glevand/tdd-project/blob/master/jenkins/job-setup/job-setup.groovy)
 file into the 'Script Console' dialog box and press the 'RUN' button.
 
 Once run, the 'Result' should be `Jenkins jobs were successfully created`.
@@ -77,8 +81,8 @@ pair for the tftp server.
 
 * Create a tftp upload user account on the tftp server.
 
-* Install the public key of the tftp server login key pair to the authorized_keys
-file of the tftp upload user on the tftp server using
+* Install the public key of the tftp server login key pair to the
+authorized_keys file of the tftp upload user on the tftp server using
 [ssh-copy-id](https://www.openssh.com/manual.html), etc.
 
 * Install the private key of the tftp server login key pair to the Jenkins
