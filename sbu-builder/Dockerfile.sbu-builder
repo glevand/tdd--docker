@@ -1,0 +1,64 @@
+# Image that contains tools for working with the Secure Boot Utils Project."
+
+ARG DOCKER_FROM
+
+FROM ${DOCKER_FROM}
+
+ENV TDD_SBU_BUILDER 1
+ENV LANG en_US.UTF-8
+
+RUN echo '*** Install OS' \
+	&& echo 'deb http://deb.debian.org/debian buster-backports main' >> /etc/apt/sources.list \
+	&& echo 'deb-src http://deb.debian.org/debian buster main' >> /etc/apt/sources.list \
+	&& echo 'deb-src http://deb.debian.org/debian buster-updates main' >> /etc/apt/sources.list \
+	&& echo 'deb-src http://deb.debian.org/debian buster-backports main' >> /etc/apt/sources.list \
+	&& echo 'deb-src http://security.debian.org/debian-security buster/updates main' >> /etc/apt/sources.list \
+	&& apt-get update \
+	&& apt-get -y upgrade \
+	&& DEBIAN_FRONTEND=noninteractive apt-get -y install \
+		apt-utils \
+		bash \
+		bash-completion \
+		bc \
+		build-essential \
+		bison \
+		ccache \
+		curl \
+		debianutils \
+		efitools \
+		flex \
+		git \
+		git-remote-gcrypt \
+		libelf-dev \
+		libncurses5-dev \
+		libssl-dev \
+		locales \
+		rsync \
+		sbsigntool \
+		sudo \
+		tcpdump \
+		unzip \
+		uuid-runtime \
+		vim \
+		wget \
+	&& DEBIAN_FRONTEND=noninteractive apt-get -t buster-backports -y install \
+		ovmf \
+		qemu-system-x86 \
+		qemu-utils \
+	&& mv /usr/sbin/tcpdump /usr/bin/tcpdump \
+	&& ln -s python3 /usr/bin/python \
+	&& sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen \
+	&& locale-gen \
+	&& update-locale LANG=en_US.UTF-8
+
+RUN echo '*** Install build-deps' \
+	&& DEBIAN_FRONTEND=noninteractive apt-get -t buster-backports -y build-dep \
+		systemd \
+	&& DEBIAN_FRONTEND=noninteractive apt-get -y install \
+		python3-jinja2
+
+RUN echo '*** Cleanup filesystem' \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
+
+CMD ["/bin/bash"]
