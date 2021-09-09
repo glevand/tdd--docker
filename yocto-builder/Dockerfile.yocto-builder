@@ -5,10 +5,11 @@ ARG DOCKER_FROM
 FROM ${DOCKER_FROM}
 
 ENV TDD_YOCTO_BUILDER 1
+ENV TDD_YOCTO_BUILDER_BULLSEYE 1
 ENV LANG en_US.UTF-8
 
-RUN echo 'deb-src http://deb.debian.org/debian buster main' >> /etc/apt/sources.list \
-	&& echo 'deb http://deb.debian.org/debian buster-backports main' >> /etc/apt/sources.list \
+RUN echo 'deb-src http://deb.debian.org/debian bullseye main' >> /etc/apt/sources.list \
+	&& echo 'deb http://deb.debian.org/debian bullseye-backports main' >> /etc/apt/sources.list \
 	&& apt-get update \
 	&& apt-get -y upgrade \
 	&& DEBIAN_FRONTEND=noninteractive apt-get -y install \
@@ -31,6 +32,7 @@ RUN echo 'deb-src http://deb.debian.org/debian buster main' >> /etc/apt/sources.
 		docker.io \
 		dos2unix \
 		dosfstools \
+		file \
 		flex \
 		gawk \
 		gcc-multilib \
@@ -62,31 +64,14 @@ RUN echo 'deb-src http://deb.debian.org/debian buster main' >> /etc/apt/sources.
 		wget \
 		xterm \
 		xz-utils \
-	&& DEBIAN_FRONTEND=noninteractive apt-get -t buster-backports -y install \
+	&& DEBIAN_FRONTEND=noninteractive apt-get -t bullseye-backports -y install \
 		ovmf \
 		qemu-system-x86 \
 		qemu-utils \
-	&& mv /usr/sbin/tcpdump /usr/bin/tcpdump \
 	&& ln -s python3 /usr/bin/python \
 	&& sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen \
 	&& locale-gen \
 	&& update-locale LANG=en_US.UTF-8
-
-RUN curl --location --output tboot.deb http://mirrors.kernel.org/ubuntu/pool/universe/t/tboot/tboot_1.9.7-0ubuntu2_amd64.deb \
-	&& dpkg -x ./tboot.deb ./tboot-files \
-	&& ls -l ./tboot-files/usr/sbin/ \
-	&& (cd ./tboot-files/usr/sbin/ && cp -av \
-		lcp_crtpol2 \
-		lcp_crtpolelt \
-		lcp_crtpollist \
-		lcp_mlehash \
-		lcp_writepol \
-		tb_polgen \
-		tpmnv_defindex \
-		/usr/local/bin/) \
-	&& ls -l /usr/local/bin/ \
-	&& rm -rf ./tboot.deb ./tboot-files \
-	&& DEBIAN_FRONTEND=noninteractive apt-get -y install libtspi1
 
 RUN echo "cleanup filesystem" \
 	&& apt-get clean \
