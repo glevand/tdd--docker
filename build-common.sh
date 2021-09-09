@@ -214,6 +214,24 @@ docker_from_debian() {
 	esac
 }
 
+docker_from_debian_buster() {
+	local arch
+	arch="$(get_arch "$(uname -m)")"
+
+	case "${arch}" in
+	amd64)
+		DOCKER_FROM="${DOCKER_FROM:-debian:buster}"
+		;;
+	arm64)
+		DOCKER_FROM="${DOCKER_FROM:-arm64v8/debian:buster}"
+		;;
+	*)
+		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
+		exit 1
+		;;
+	esac
+}
+
 docker_from_debian_jessie() {
 	local arch
 	arch="$(get_arch "$(uname -m)")"
@@ -329,6 +347,9 @@ set_docker_from() {
 		;;
 	debian)
 		docker_from_debian
+		;;
+	debian_buster)
+		docker_from_debian_buster
 		;;
 	debian_jessie)
 		docker_from_debian_jessie
