@@ -5,6 +5,7 @@ ARG DOCKER_FROM
 FROM ${DOCKER_FROM}
 
 ENV TDD_YOCTO_BUILDER 1
+ENV TDD_YOCTO_BUILDER_JESSIE 1
 ENV LANG en_US.UTF-8
 
 RUN echo 'deb-src http://deb.debian.org/debian jessie main' >> /etc/apt/sources.list \
@@ -54,22 +55,6 @@ RUN echo 'deb-src http://deb.debian.org/debian jessie main' >> /etc/apt/sources.
 	&& sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen \
 	&& locale-gen \
 	&& update-locale LANG=en_US.UTF-8
-
-RUN curl --location --output tboot.deb http://mirrors.kernel.org/ubuntu/pool/universe/t/tboot/tboot_1.8.3-0ubuntu1_amd64.deb \
-	&& dpkg -x ./tboot.deb ./tboot-files \
-	&& ls -l ./tboot-files/usr/sbin/ \
-	&& (cd ./tboot-files/usr/sbin/ && cp -av \
-		lcp_crtpol2 \
-		lcp_crtpolelt \
-		lcp_crtpollist \
-		lcp_mlehash \
-		lcp_writepol \
-		tb_polgen \
-		tpmnv_defindex \
-		/usr/local/bin/) \
-	&& ls -l /usr/local/bin/ \
-	&& rm -rf ./tboot.deb ./tboot-files \
-	&& DEBIAN_FRONTEND=noninteractive apt-get -y install libtspi1
 
 RUN echo "cleanup filesystem" \
 	&& apt-get clean \
