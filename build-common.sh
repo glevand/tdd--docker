@@ -196,16 +196,16 @@ docker_from_centos() {
 	esac
 }
 
-docker_from_debian() {
+docker_from_debian_bullseye() {
 	local arch
 	arch="$(get_arch "$(uname -m)")"
 
 	case "${arch}" in
 	amd64)
-		DOCKER_FROM="${DOCKER_FROM:-debian:buster}"
+		DOCKER_FROM="${DOCKER_FROM:-debian:bullseye}"
 		;;
 	arm64)
-		DOCKER_FROM="${DOCKER_FROM:-arm64v8/debian:buster}"
+		DOCKER_FROM="${DOCKER_FROM:-arm64v8/debian:bullseye}"
 		;;
 	*)
 		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
@@ -346,7 +346,10 @@ set_docker_from() {
 		docker_from_centos
 		;;
 	debian)
-		docker_from_debian
+		docker_from_debian_bullseye
+		;;
+	debian_bullseye)
+		docker_from_debian_bullseye
 		;;
 	debian_buster)
 		docker_from_debian_buster
