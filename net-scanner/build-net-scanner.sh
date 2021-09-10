@@ -60,7 +60,7 @@ project_from="debian"
 project_description="Builds a docker image that contains tools for gathering information about a network."
 
 PROJECT_TOP="${DOCKER_TOP}/${project_name}"
-VERSION="${VERSION:-1}"
+VERSION="${VERSION:-2}"
 DOCKER_NAME="${DOCKER_NAME:-tdd-net-scanner}"
 
 source "${DOCKER_TOP}/build-common.sh"
