@@ -10,7 +10,7 @@ project_from="debian"
 project_description="Builds a docker image that contains tools for the TDD Project."
 
 PROJECT_TOP="${DOCKER_TOP}/${project_name}"
-VERSION=${VERSION:-"1"}
+VERSION=${VERSION:-"2"}
 DOCKER_NAME=${DOCKER_NAME:-"tdd-${project_name}"}
 
 build_on_exit() {
