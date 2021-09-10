@@ -4,7 +4,7 @@ usage () {
 	local old_xtrace
 	old_xtrace="$(shopt -po xtrace || :)"
 	set +o xtrace
-	echo "${script_name} - Enter a running yocto-builder container." >&2
+	echo "${script_name} - Enter a running tdd-net-scanner container." >&2
 	echo "Usage: ${script_name} [flags] -- [command] [args]" >&2
 	echo "Option flags:" >&2
 	echo "  -h --help           - Show this help and exit." >&2
@@ -78,8 +78,8 @@ script_name="${0##*/}"
 
 SCRIPTS_TOP=${SCRIPTS_TOP:-"$(cd "${BASH_SOURCE%/*}" && pwd )"}
 
-if [ "${TDD_YOCTO_BUILDER}" ]; then
-	echo "${script_name}: ERROR: Already in yocto-builder." >&2
+if [ "${TDD_NET_SCANNER}" ]; then
+	echo "${script_name}: ERROR: Already in tdd-net-scanner." >&2
 	exit 1
 fi
 
@@ -88,7 +88,7 @@ set -e
 
 process_opts "${@}"
 
-container_name=${container_name:-"yocto-builder"}
+container_name=${container_name:-"tdd-net-scanner"}
 user_cmd=${user_cmd:-"/bin/bash"}
 
 unset docker_extra_args

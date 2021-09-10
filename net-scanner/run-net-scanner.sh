@@ -88,8 +88,8 @@ export PS4='\[\e[0;33m\]+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):\[
 
 script_name="${0##*/}"
 
-if [ "${TDD_NET_SCAN}" ]; then
-	echo "${script_name}: ERROR: Already in net-scanner." >&2
+if [ "${TDD_NET_SCANNER}" ]; then
+	echo "${script_name}: ERROR: Already in tdd-net-scanner." >&2
 	exit 1
 fi
 
@@ -100,9 +100,8 @@ set -e
 
 process_opts "${@}"
 
-container_name=${container_name:-"net-scanner"}
-#docker_tag=${docker_tag:-"net-scanner:latest"}
-docker_tag=${docker_tag:-"tdd-net-scanner:1-amd64"}
+container_name=${container_name:-"tdd-net-scanner"}
+docker_tag=${docker_tag:-"tdd-net-scanner:latest"}
 histfile=${histfile:-"$(pwd)/${container_name}--bash_history"}
 user_cmd=${user_cmd:-"/bin/bash"}
 
