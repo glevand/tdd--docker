@@ -8,9 +8,10 @@ ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 
 ENV TDD_BUILDER 1
-ENV TDD_DEBIAN_BUILDER 1
+ENV TDD_BUILDER_DEBIAN 1
+ENV TDD_BUILDER_DEBIAN_BULLSEYE 1
 
-RUN echo 'deb-src http://deb.debian.org/debian buster main' >> /etc/apt/sources.list \
+RUN echo 'deb-src http://deb.debian.org/debian bullseye main' >> /etc/apt/sources.list \
 	&& apt-get update \
 	&& apt-get -y upgrade \
 	&& DEBIAN_FRONTEND=noninteractive apt-get -y install \
@@ -25,6 +26,7 @@ RUN echo 'deb-src http://deb.debian.org/debian buster main' >> /etc/apt/sources.
 		dnsutils \
 		docker.io \
 		dosfstools \
+		file \
 		flex \
 		gcc-x86-64-linux-gnu \
 		git \
@@ -64,7 +66,6 @@ RUN echo 'deb-src http://deb.debian.org/debian buster main' >> /etc/apt/sources.
 		qemu-system-ppc \
 		openbios-ppc; fi \
 	&& DEBIAN_FRONTEND=noninteractive apt-get -y autoremove \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& mv /usr/sbin/tcpdump /usr/bin/tcpdump
+	&& rm -rf /var/lib/apt/lists/*
 
 CMD /bin/bash
