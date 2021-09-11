@@ -12,8 +12,8 @@ ENV TDD_BUILDER_DEBIAN 1
 ENV TDD_BUILDER_DEBIAN_BULLSEYE 1
 
 RUN echo 'deb-src http://deb.debian.org/debian bullseye main' >> /etc/apt/sources.list \
-	&& apt-get update \
-	&& apt-get -y upgrade \
+	&& DEBIAN_FRONTEND=noninteractive apt-get update \
+	&& DEBIAN_FRONTEND=noninteractive apt-get -y upgrade \
 	&& DEBIAN_FRONTEND=noninteractive apt-get -y install \
 		apt-utils \
 		bash \
@@ -54,12 +54,16 @@ RUN echo 'deb-src http://deb.debian.org/debian bullseye main' >> /etc/apt/source
 		vim \
 		wget \
 		zypper \
-	&& apt-get -y build-dep linux \
+	&& DEBIAN_FRONTEND=noninteractive apt-get -y build-dep linux \
 	&& DEBIAN_FRONTEND=noninteractive apt-get -y install \
 		g++-aarch64-linux-gnu \
 		gcc-aarch64-linux-gnu \
-		qemu-efi-aarch64 \
+		g++-arm-linux-gnueabi \
+		gcc-arm-linux-gnueabi \
 		qemu-system-arm \
+		qemu-efi-aarch64 \
+		qemu-efi-arm \
+		arm-trusted-firmware-tools \
 	&& if [ "$(uname -m)" != "aarch64" ]; then \
 		DEBIAN_FRONTEND=noninteractive apt-get -y install \
 		gcc-powerpc-linux-gnu \
