@@ -1,17 +1,22 @@
 #!/usr/bin/env bash
 
+if [[ ${JENKINS_URL:-} ]]; then
+	export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):'
+else
+	export PS4='\[\e[0;33m\]+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):\[\e[0m\] '
+fi
+
 set -e
 
 script_name="${0##*/}"
-DOCKER_TOP=${DOCKER_TOP:-"$(cd "${BASH_SOURCE%/*}/.." && pwd)"}
 
-project_name="tftpd"
-project_from="alpine"
-project_description="Builds a minimal docker image that contains tftpd-hpa."
+DOCKER_TOP="${DOCKER_TOP:-$(realpath "${BASH_SOURCE%/*}/..")}"
 
-PROJECT_TOP="${DOCKER_TOP}/${project_name}"
+project_name='tftpd'
+project_from='alpine'
+project_description='Builds a minimal docker image that contains tftpd-hpa.'
+
 VERSION=${VERSION:-"1"}
-DOCKER_NAME=${DOCKER_NAME:-"tdd-tftpd"}
 
 build_on_exit() {
 	true

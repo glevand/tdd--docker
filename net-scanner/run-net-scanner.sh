@@ -4,25 +4,28 @@ usage () {
 	local old_xtrace
 	old_xtrace="$(shopt -po xtrace || :)"
 	set +o xtrace
-	echo "${script_name} - Runs a TDD net-scanner container.  If no command is provided, runs an interactive container with the current directory as the container's working directory." >&2
-	echo "Usage: ${script_name} [flags] -- [command] [args]" >&2
-	echo "Option flags:" >&2
-	echo "  -h --help           - Show this help and exit." >&2
-	echo "  -v --verbose        - Verbose execution." >&2
-	echo "  -a --docker-args    - Args for docker run. Default: '${docker_args}'" >&2
-	echo "  -n --container-name - Container name. Default: '${container_name}'." >&2
-	echo "  -t --docker-tag     - Docker tag. Default: '${docker_tag}'." >&2
-	echo "  -r --as-root        - Run as root user." >&2
-	echo "Args:" >&2
-	echo "  command             - Default: '${user_cmd}'" >&2
-	echo "Examples:" >&2
-	echo "  ${script_name} -v" >&2
+	{
+		echo "${script_name} - Runs a TDD net-scanner container.  If no command is provided, runs an interactive container with the current directory as the container's working directory."
+		echo "Usage: ${script_name} [flags] -- [command] [args]"
+		echo "Option flags:"
+		echo "  -a --docker-args    - Args for docker run. Default: '${docker_args}'"
+		echo "  -n --container-name - Container name. Default: '${container_name}'."
+		echo "  -t --docker-tag     - Docker tag. Default: '${docker_tag}'."
+		echo "  -r --as-root        - Run as root user."
+		echo "  -h --help           - Show this help and exit."
+		echo "  -v --verbose        - Verbose execution. Default: '${verbose}'."
+		echo "  -g --debug          - Extra verbose execution. Default: '${debug}'."
+		echo "Args:"
+		echo "  command             - Default: '${user_cmd}'"
+		echo "Examples:"
+		echo "  ${script_name} -v"
+	} >&2
 	eval "${old_xtrace}"
 }
 
 process_opts() {
-	local short_opts="hva:n:t:r"
-	local long_opts="help,verbose,docker-args:,container-name:,docker-tag:,as-root"
+	local short_opts="a:n:t:rhvg"
+	local long_opts="docker-args:,container-name:,docker-tag:,as-root,help,verbose,debug"
 
 	local opts
 	if ! opts=$(getopt --options ${short_opts} --long ${long_opts} -n "${script_name}" -- "$@"); then
@@ -35,15 +38,6 @@ process_opts() {
 	while true ; do
 		# echo "${FUNCNAME[0]}: (${#}) '${*}'"
 		case "${1}" in
-		-h | --help)
-			usage=1
-			shift
-			;;
-		-v | --verbose)
-			set -x
-			#verbose=1
-			shift
-			;;
 		-a | --docker-args)
 			docker_args="${2}"
 			shift 2
@@ -58,6 +52,21 @@ process_opts() {
 			;;
 		-r | --as-root)
 			as_root=1
+			shift
+			;;
+...		-h | --help)
+			usage=1
+			shift
+			;;
+		-v | --verbose)
+			verbose=1
+			shift
+			;;
+		-g | --debug)
+			verbose=1
+			debug=1
+			keep_tmp_dir=1
+			set -x
 			shift
 			;;
 		--)

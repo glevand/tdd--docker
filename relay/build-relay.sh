@@ -1,5 +1,24 @@
 #!/usr/bin/env bash
 
+if [[ ${JENKINS_URL:-} ]]; then
+	export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):'
+else
+	export PS4='\[\e[0;33m\]+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):\[\e[0m\] '
+fi
+
+set -e
+
+script_name="${0##*/}"
+
+DOCKER_TOP="${DOCKER_TOP:-$(realpath "${BASH_SOURCE%/*}/..")}"
+
+project_name='relay'
+#project_from='alpine'
+project_from='debian' # for debugging
+project_description='Builds a docker image that contains the TDD relay service.'
+
+VERSION="${VERSION:-2}"
+
 build_on_exit() {
 	rm -f "${tmp_image}"
 }
@@ -32,21 +51,10 @@ host_install_extra() {
 	sudo cp -vf "${relay_src}/tdd-relay.conf.sample" "/etc/tdd-relay.conf"
 }
 
-set -e
-
-script_name="${0##*/}"
-DOCKER_TOP="${DOCKER_TOP:-"$(cd "${BASH_SOURCE%/*}/.." && pwd)"}"
-
-project_name="relay"
-#project_from="alpine"
-project_from="debian" # for debugging
-project_description="Builds a docker image that contains the TDD relay service."
-
 PROJECT_TOP="${DOCKER_TOP}/${project_name}"
-VERSION="${VERSION:-1}"
-DOCKER_NAME="${DOCKER_NAME:-tdd-relay}"
 
 tmp_image="${PROJECT_TOP}/tdd-relay"
-relay_src="$(cd "${PROJECT_TOP}/../../${project_name}" && pwd)"
+
+relay_src="$(realpath "${PROJECT_TOP}/../../${project_name}")"
 
 source "${DOCKER_TOP}/build-common.sh"

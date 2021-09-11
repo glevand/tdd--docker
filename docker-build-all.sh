@@ -1,16 +1,119 @@
 #!/usr/bin/env bash
 
-set -e
+usage() {
+	local old_xtrace="$(shopt -po xtrace || :)"
+	set +o xtrace
+	{
+		echo "${script_name} - Builds all TDD container images."
+		echo "Usage: ${script_name} [flags]"
+		echo "Option flags:"
+		echo "  -i --info     - Show project help."
+		echo "  -p --purge    - Remove existing docker image and rebuild."
+		echo "  -r --rebuild  - Rebuild existing docker image."
+		echo "  --install     - Install systemd service files."
+		echo "  --start       - Start systemd services."
+		echo "  --enable      - Enable systemd services."
+		echo "  -h --help     - Show this help and exit."
+		echo "  -v --verbose  - Verbose execution. Default: '${verbose}'."
+		echo "  -g --debug    - Extra verbose execution. Default: '${debug}'."
+		echo "Info:"
+		echo "  ${PACKAGE_NAME} ${script_name}"
+		echo "  Version: ${PACKAGE_VERSION}"
+		echo "  Project Home: ${PACKAGE_URL}"
+	} >&2
+	eval "${old_xtrace}"
+}
 
-script_name="${0##*/}"
+process_opts() {
+	local short_opts="iprhvg"
+	local long_opts="info,purge,rebuild,install,start,enable,help,verbose,debug"
 
-DOCKER_TOP=${DOCKER_TOP:-"$( cd "${BASH_SOURCE%/*}" && pwd )"}
+	local opts
+	opts=$(getopt --options ${short_opts} --long ${long_opts} -n "${script_name}" -- "$@")
 
-if [[ -n "${JENKINS_URL}" ]]; then
-	export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):'
-else
-	export PS4='\[\e[0;33m\]+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):\[\e[0m\] '
-fi
+	eval set -- "${opts}"
+
+	while true ; do
+		# echo "${FUNCNAME[0]}: (${#}) '${*}'"
+		case "${1}" in
+		-i | --info)
+			info=1
+			shift
+			;;
+		-p | --purge)
+			purge=1
+			shift
+			;;
+		-r | --rebuild)
+			rebuild=1
+			shift
+			;;
+		--install)
+			install=1
+			shift
+			;;
+		--start)
+			start=1
+			shift
+			;;
+		--enable)
+			enable=1
+			shift
+			;;
+		-h | --help)
+			usage=1
+			shift
+			;;
+		-v | --verbose)
+			verbose=1
+			shift
+			;;
+		-g | --debug)
+			verbose=1
+			debug=1
+			keep_tmp_dir=1
+			set -x
+			shift
+			;;
+		--)
+			shift
+			extra_args="${*}"
+			break
+			;;
+		*)
+			echo "${script_name}: ERROR: Internal opts: '${*}'" >&2
+			exit 1
+			;;
+		esac
+	done
+}
+
+on_exit() {
+	local result=${1}
+
+	local sec="${SECONDS}"
+
+	set +x
+	echo "${script_name}: Done: ${result}, ${sec} sec." >&2
+}
+
+on_err() {
+	local f_name=${1}
+	local line_no=${2}
+	local err_no=${3}
+
+	{
+		if [[ ${debug:-} ]]; then
+			echo '------------------------'
+			set
+			echo '------------------------'
+		fi
+
+		echo "${script_name}: ERROR: function=${f_name}, line=${line_no}, result=${err_no}"
+	} >&2
+
+	exit "${err_no}"
+}
 
 get_arch() {
 	local a=${1}
@@ -25,79 +128,57 @@ get_arch() {
 	esac
 }
 
-usage() {
-	local old_xtrace="$(shopt -po xtrace || :)"
-	set +o xtrace
-	echo "${script_name} - Builds all TDD container images." >&2
-	echo "Usage: ${script_name} [flags]" >&2
-	echo "Option flags:" >&2
-	echo "  -h --help     - Show this help and exit." >&2
-	echo "  -i --info     - Show project help." >&2
-	echo "  -p --purge    - Remove existing docker image and rebuild." >&2
-	echo "  -r --rebuild  - Rebuild existing docker image." >&2
-	echo "  --install     - Install systemd service files." >&2
-	echo "  --start       - Start systemd services." >&2
-	echo "  --enable      - Enable systemd services." >&2
-
-	eval "${old_xtrace}"
-}
-
-short_opts="hipr"
-long_opts="help,info,purge,rebuild,install,start,enable"
-
-opts=$(getopt --options ${short_opts} --long ${long_opts} -n "${script_name}" -- "$@")
-
-if [ $? != 0 ]; then
-	echo "${script_name}: ERROR: Internal getopt" >&2
-	exit 1
+#===============================================================================
+if [[ ${JENKINS_URL:-} ]]; then
+	export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):'
+else
+	export PS4='\[\e[0;33m\]+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):\[\e[0m\] '
 fi
 
-eval set -- "${opts}"
+script_name="${0##*/}"
 
-while true ; do
-	case "${1}" in
-	-h | --help)
-		usage=1
-		shift
-		;;
-	-i | --info)
-		info=1
-		shift
-		;;
-	-p | --purge)
-		purge=1
-		shift
-		;;
-	-r | --rebuild)
-		rebuild=1
-		shift
-		;;
-	--install)
-		install=1
-		shift
-		;;
-	--start)
-		start=1
-		shift
-		;;
-	--enable)
-		enable=1
-		shift
-		;;
-	--)
-		shift
-		break
-		;;
-	*)
-		echo "${script_name}: ERROR: Internal opts: '${@}'" >&2
-		exit 1
-		;;
-	esac
-done
+SECONDS=0
+start_time="$(date +%Y.%m.%d-%H.%M.%S)"
 
-if [[ -n "${usage}" ]]; then
+DOCKER_TOP="${DOCKER_TOP:-$(realpath "${BASH_SOURCE%/*}")}"
+
+trap "on_exit 'Failed'" EXIT
+trap 'on_err ${FUNCNAME[0]:-main} ${LINENO} ${?}' ERR
+trap 'on_err SIGUSR1 ? 3' SIGUSR1
+
+set -eE
+set -o pipefail
+set -o nounset
+
+info=''
+purge=''
+rebuild=''
+install=''
+start=''
+enable=''
+usage=''
+verbose=''
+debug=''
+
+PACKAGE_NAME='TDD'
+PACKAGE_VERSION="$(${DOCKER_TOP}/version.sh)"
+PACKAGE_URL='http://github.com/glevand/tdd--docker'
+
+process_opts "${@}"
+
+if [[ ${usage} ]]; then
 	usage
+	trap - EXIT
 	exit 0
+fi
+
+echo "${script_name} (${PACKAGE_NAME}) version ${PACKAGE_VERSION}" >&2
+
+if [[ ${extra_args} ]]; then
+	set +o xtrace
+	echo "${script_name}: ERROR: Got extra args: '${extra_args}'" >&2
+	usage
+	exit 1
 fi
 
 host_arch=$(get_arch "$(uname -m)")
@@ -149,5 +230,5 @@ for p in ${projects}; do
 	echo '===================================' >&2
 done
 
-echo "${script_name}: Done, success." >&2
-
+trap "on_exit 'Success'" EXIT
+exit 0
