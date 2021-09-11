@@ -1,5 +1,23 @@
 #!/usr/bin/env bash
 
+if [[ ${JENKINS_URL:-} ]]; then
+	export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):'
+else
+	export PS4='\[\e[0;33m\]+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):\[\e[0m\] '
+fi
+
+set -e
+
+script_name="${0##*/}"
+
+DOCKER_TOP="${DOCKER_TOP:-$(realpath "${BASH_SOURCE%/*}/..")}"
+
+project_name='net-scanner'
+project_from='debian'
+project_description='Builds a docker image that contains tools for gathering information about a network.'
+
+VERSION="${VERSION:-2}"
+
 docker_build_setup() {
 	echo "${script_name}: Building unicornscan." >&2
 
@@ -49,18 +67,5 @@ host_install_extra() {
 build_on_exit() {
 	rm -rf "${PROJECT_TOP}/u-install"
 }
-
-set -e
-
-script_name="${0##*/}"
-DOCKER_TOP="${DOCKER_TOP:-"$(cd "${BASH_SOURCE%/*}/.." && pwd)"}"
-
-project_name="net-scanner"
-project_from="debian"
-project_description="Builds a docker image that contains tools for gathering information about a network."
-
-PROJECT_TOP="${DOCKER_TOP}/${project_name}"
-VERSION="${VERSION:-2}"
-DOCKER_NAME="${DOCKER_NAME:-tdd-net-scanner}"
 
 source "${DOCKER_TOP}/build-common.sh"

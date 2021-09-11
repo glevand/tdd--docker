@@ -67,7 +67,6 @@ RUN echo 'deb-src http://deb.debian.org/debian buster main' >> /etc/apt/sources.
 		ovmf \
 		qemu-system-x86 \
 		qemu-utils \
-	&& mv /usr/sbin/tcpdump /usr/bin/tcpdump \
 	&& ln -s python3 /usr/bin/python \
 	&& sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen \
 	&& locale-gen \

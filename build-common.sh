@@ -29,9 +29,7 @@ usage () {
 		echo "Examples:"
 		echo "  ${script_name} -v"
 		echo "Info:"
-		echo "  ${script_name} (@PACKAGE_NAME@) version @PACKAGE_VERSION@"
-		echo "  @PACKAGE_URL@"
-		echo "  Send bug reports to: Geoff Levand <geoff@infradead.org>."
+		print_project_info
 	} >&2
 
 	eval "${old_xtrace}"
@@ -101,6 +99,16 @@ process_opts() {
 	done
 }
 
+print_project_banner() {
+	echo "${script_name} (${PACKAGE_NAME}) version ${PACKAGE_VERSION}"
+}
+
+print_project_info() {
+	echo "  ${PACKAGE_NAME} ${script_name}"
+	echo "  Version: ${PACKAGE_VERSION}"
+	echo "  Project Home: ${PACKAGE_URL}"
+}
+
 on_exit() {
 	local result=${1}
 	local sec="${SECONDS}"
@@ -115,7 +123,7 @@ on_exit() {
 
 	build_on_exit "${result}"
 	set +x
-	echo "${script_name}: Done: ${result}, ${sec} sec." >&2
+	echo "${script_name}: Done: ${result}, ${sec} sec ($(sec_to_min "${sec}") min)." >&2
 }
 
 on_err() {
@@ -129,6 +137,24 @@ on_err() {
 
 version () {
 	echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'
+}
+
+sec_to_min() {
+	local sec=${1}
+
+	local min
+	local frac_10
+	local frac_100
+
+	min=$(( sec / 60 ))
+	frac_10=$(( (sec - min * 60) * 10 / 60 ))
+	frac_100=$(( (sec - min * 60) * 100 / 60 ))
+
+	if (( frac_10 != 0 )); then
+		frac_10=''
+	fi
+
+	echo "${min}.${frac_10}${frac_100}"
 }
 
 get_arch() {
@@ -400,6 +426,10 @@ set -eE
 set -o pipefail
 set -o nounset
 
+PACKAGE_NAME='TDD'
+PACKAGE_VERSION="$(${DOCKER_TOP}/version.sh)"
+PACKAGE_URL='http://github.com/glevand/tdd--docker'
+
 if [[ ${TDD_BUILDER-} && "${project_name}" == "builder"  ]]; then
 	echo "${script_name}: ERROR: Building builder in builder not supported." >&2
 	exit 1
@@ -407,6 +437,7 @@ fi
 
 PROJECT_TOP="${DOCKER_TOP}/${project_name}"
 ARCH_TAG="${ARCH_TAG:-$(arch_tag)}"
+DOCKER_NAME=${DOCKER_NAME:-"tdd-${project_name}"}
 DOCKER_TAG="${DOCKER_TAG:-${DOCKER_NAME}:${VERSION}${ARCH_TAG}}"
 
 DOCKER_FILE="${DOCKER_FILE:-${PROJECT_TOP}/Dockerfile.${project_name}}"

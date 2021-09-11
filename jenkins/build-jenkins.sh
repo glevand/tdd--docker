@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
 
+if [[ ${JENKINS_URL:-} ]]; then
+	export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):'
+else
+	export PS4='\[\e[0;33m\]+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):\[\e[0m\] '
+fi
+
 set -e
 
-name="${0##*/}"
-DOCKER_TOP=${DOCKER_TOP:-"$(cd "${BASH_SOURCE%/*}/.." && pwd)"}
+script_name="${0##*/}"
 
-project_name="jenkins"
-project_from="openjdk"
-project_description="Builds a docker image that contains Jenkins for the TDD Project."
+DOCKER_TOP="${DOCKER_TOP:-$(realpath "${BASH_SOURCE%/*}/..")}"
 
-PROJECT_TOP="${DOCKER_TOP}/${project_name}"
+project_name='jenkins'
+project_from='openjdk'
+project_description='Builds a docker image that contains Jenkins for the TDD Project.'
+
 VERSION=${VERSION:-"1"}
-DOCKER_NAME=${DOCKER_NAME:-"tdd-jenkins"}
-
 JENKINS_USER=${JENKINS_USER:-'tdd-jenkins'}
 
 if ! getent passwd ${JENKINS_USER} &> /dev/null; then

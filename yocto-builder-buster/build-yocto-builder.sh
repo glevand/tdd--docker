@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 
+if [[ ${JENKINS_URL:-} ]]; then
+	export PS4='+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):'
+else
+	export PS4='\[\e[0;33m\]+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):\[\e[0m\] '
+fi
+
 set -e
 
 script_name="${0##*/}"
-DOCKER_TOP=${DOCKER_TOP:-"$(cd "${BASH_SOURCE%/*}/.." && pwd)"}
 
-project_name="yocto-builder-buster"
-project_from="debian_buster"
-project_description="Builds a docker image that contains tools for working with Yocto."
+DOCKER_TOP="${DOCKER_TOP:-$(realpath "${BASH_SOURCE%/*}/..")}"
 
-PROJECT_TOP="${DOCKER_TOP}/${project_name}"
 VERSION=${VERSION:-"5"}
-DOCKER_NAME=${DOCKER_NAME:-"${project_name}"}
 
 build_on_exit() {
 	true

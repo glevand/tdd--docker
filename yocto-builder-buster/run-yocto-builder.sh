@@ -76,8 +76,12 @@ process_opts() {
 on_exit() {
 	local result=${1}
 
-	if [ -d "${tmp_dir}" ]; then
-		rm -rf "${tmp_dir}"
+	if [[ -d "${tmp_dir:-}" ]]; then
+		if [[ ${keep_tmp_dir:-} ]]; then
+			echo "${script_name}: INFO: tmp dir preserved: '${tmp_dir}'" >&2
+		else
+			rm -rf "${tmp_dir:?}"
+		fi
 	fi
 
 	echo "${script_name}: ${result}" >&2

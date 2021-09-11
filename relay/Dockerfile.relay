@@ -16,8 +16,7 @@ RUN apt-get update \
 		tcpdump \
 		vim \
 	&& DEBIAN_FRONTEND=noninteractive apt-get -y autoremove \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& mv /usr/sbin/tcpdump /usr/bin/tcpdump
+	&& rm -rf /var/lib/apt/lists/*
 
 COPY tdd-relay /usr/bin/
 
