@@ -38,6 +38,7 @@ RUN echo 'deb-src http://deb.debian.org/debian bullseye main' >> /etc/apt/source
 		libncurses5-dev \
 		libpcap-dev \
 		libssl-dev \
+		libyaml-dev \
 		netcat-openbsd \
 		net-tools \
 		ovmf \
