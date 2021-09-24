@@ -16,7 +16,7 @@ project_name='builder'
 project_from='debian'
 project_description='Builds a docker image that contains tools for the TDD Project.'
 
-VERSION=${VERSION:-"2"}
+VERSION=${VERSION:-"3"}
 
 build_on_exit() {
 	true

@@ -61,6 +61,8 @@ RUN echo 'deb-src http://deb.debian.org/debian bullseye main' >> /etc/apt/source
 		gcc-aarch64-linux-gnu \
 		g++-arm-linux-gnueabi \
 		gcc-arm-linux-gnueabi \
+		g++-arm-linux-gnueabihf \
+		gcc-arm-linux-gnueabihf \
 		qemu-system-arm \
 		qemu-efi-aarch64 \
 		qemu-efi-arm \
