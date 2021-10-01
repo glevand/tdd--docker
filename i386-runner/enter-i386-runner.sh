@@ -106,7 +106,9 @@ on_err() {
 export PS4='\[\e[0;33m\]+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):\[\e[0m\] '
 
 script_name="${0##*/}"
-SCRIPTS_TOP=${SCRIPTS_TOP:-"$(cd "${BASH_SOURCE%/*}" && pwd )"}
+
+real_source="$(realpath "${BASH_SOURCE}")"
+SCRIPT_TOP="$(realpath "${SCRIPT_TOP:-${real_source%/*}}")"
 
 trap "on_exit 'Failed'" EXIT
 trap 'on_err ${FUNCNAME[0]:-main} ${LINENO} ${?}' ERR
