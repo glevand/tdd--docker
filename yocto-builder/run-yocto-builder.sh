@@ -93,7 +93,8 @@ if [ "${TDD_YOCTO_BUILDER}" ]; then
 	exit 1
 fi
 
-SCRIPTS_TOP=${SCRIPTS_TOP:-"$(cd "${BASH_SOURCE%/*}" && pwd )"}
+real_source="$(realpath "${BASH_SOURCE}")"
+SCRIPT_TOP="$(realpath "${SCRIPT_TOP:-${real_source%/*}}")"
 
 trap "on_exit 'Done, failed.'" EXIT
 set -e
