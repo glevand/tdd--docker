@@ -10,7 +10,8 @@ set -e
 
 script_name="${0##*/}"
 
-DOCKER_TOP="${DOCKER_TOP:-$(realpath "${BASH_SOURCE%/*}/..")}"
+real_source="$(realpath "${BASH_SOURCE}")"
+DOCKER_TOP="$(realpath "${DOCKER_TOP:-${real_source%/*}/..}")"
 
 project_name='builder'
 project_from='debian'

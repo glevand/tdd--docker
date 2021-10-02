@@ -140,7 +140,8 @@ script_name="${0##*/}"
 SECONDS=0
 start_time="$(date +%Y.%m.%d-%H.%M.%S)"
 
-DOCKER_TOP="${DOCKER_TOP:-$(realpath "${BASH_SOURCE%/*}")}"
+real_source="$(realpath "${BASH_SOURCE}")"
+DOCKER_TOP="$(realpath "${DOCKER_TOP:-${real_source%/*}/..}")"
 
 trap "on_exit 'Failed'" EXIT
 trap 'on_err ${FUNCNAME[0]:-main} ${LINENO} ${?}' ERR
