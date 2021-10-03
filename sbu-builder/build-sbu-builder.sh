@@ -13,7 +13,6 @@ script_name="${0##*/}"
 real_source="$(realpath "${BASH_SOURCE}")"
 DOCKER_TOP="$(realpath "${DOCKER_TOP:-${real_source%/*}/..}")"
 
-
 project_name='sbu-builder'
 project_from='debian'
 project_description='Builds a docker image that contains tools for working with the Secure Boot Utils Project.'
