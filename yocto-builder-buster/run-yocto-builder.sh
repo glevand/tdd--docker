@@ -169,6 +169,7 @@ eval "docker run \
 	--rm \
 	-it \
 	-v /tmp/.X11-unix:/tmp/.X11-unix \
+	-v ${HOME}/.Xauthority:${HOME}/.Xauthority \
 	-e DISPLAY \
 	-e USER \
 	-v /dev:/dev \
