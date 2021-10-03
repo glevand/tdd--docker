@@ -3,8 +3,10 @@
 ARG DOCKER_FROM
 FROM ${DOCKER_FROM}
 
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
+ENV LANG='C.UTF-8' \
+	LC_ALL='C.UTF-8' \
+	TDD_JENKINS='1' \
+	TDD_JENKINS_DEBIAN='1'
 
 ARG user=tdd-jenkins
 ARG group=tdd-jenkins
@@ -44,7 +46,7 @@ RUN apt-get update \
 	&& apt-get update \
 	&& DEBIAN_FRONTEND=noninteractive apt-get -y install \
 		docker-ce \
-	&& DEBIAN_FRONTEND=noninteractive apt-get -y autoremove \
+	&& DEBIAN_FRONTEND=noninteractive apt-get -y clean \
 	&& rm -v -rf /var/lib/apt/lists/* \
 	&& mkdir -p /usr/share/jenkins/ref/init.groovy.d
 

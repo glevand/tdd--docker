@@ -4,8 +4,10 @@ ARG DOCKER_FROM
 
 FROM ${DOCKER_FROM}
 
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
+ENV LANG='C.UTF-8' \
+	LC_ALL='C.UTF-8' \
+	TDD_TFTP_SERVER='1' \
+	TDD_TFTP_SERVER_ALPINE='1'
 
 RUN apk add --update tftp-hpa \
 	&& rm -rf /tmp/* /var/tmp/*
