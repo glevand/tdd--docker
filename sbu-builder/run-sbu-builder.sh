@@ -19,8 +19,9 @@ usage () {
 		echo "  command             - Default: '${user_cmd}'"
 		echo 'Examples:'
 		echo "  ${script_name} -v"
-		echo 'Notes:'
-		echo "  If no command is provided, runs an interactive container with the current directory as the container's working directory."
+		echo "Notes:"
+		echo "  If no command is provided, runs an interactive container with the current"
+		echo "  directory as the container's working directory."
 		echo "Info:"
 		echo "  ${script_name} (@PACKAGE_NAME@) version @PACKAGE_VERSION@"
 		echo "  @PACKAGE_URL@"
