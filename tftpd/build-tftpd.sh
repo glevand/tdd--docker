@@ -13,7 +13,7 @@ script_name="${0##*/}"
 real_source="$(realpath "${BASH_SOURCE}")"
 DOCKER_TOP="$(realpath "${DOCKER_TOP:-${real_source%/*}/..}")"
 
-project_name='tftpd'
+project_name='tdd-tftpd'
 project_from='alpine'
 project_description='Builds a minimal docker image that contains tftpd-hpa.'
 

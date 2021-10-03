@@ -13,7 +13,7 @@ script_name="${0##*/}"
 real_source="$(realpath "${BASH_SOURCE}")"
 DOCKER_TOP="$(realpath "${DOCKER_TOP:-${real_source%/*}/..}")"
 
-project_name='relay'
+project_name='tdd-relay'
 #project_from='alpine'
 project_from='debian' # for debugging
 project_description='Builds a docker image that contains the TDD relay service.'
@@ -52,10 +52,10 @@ host_install_extra() {
 	sudo cp -vf "${relay_src}/tdd-relay.conf.sample" "/etc/tdd-relay.conf"
 }
 
-PROJECT_TOP="${DOCKER_TOP}/${project_name}"
+PROJECT_TOP="${DOCKER_TOP}/relay"
 
 tmp_image="${PROJECT_TOP}/tdd-relay"
 
-relay_src="$(realpath "${PROJECT_TOP}/../../${project_name}")"
+relay_src="$(realpath "${PROJECT_TOP}/../../relay")"
 
 source "${DOCKER_TOP}/build-common.sh"

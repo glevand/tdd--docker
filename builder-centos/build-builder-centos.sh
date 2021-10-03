@@ -13,7 +13,7 @@ script_name="${0##*/}"
 real_source="$(realpath "${BASH_SOURCE}")"
 DOCKER_TOP="$(realpath "${DOCKER_TOP:-${real_source%/*}/..}")"
 
-project_name='builder-centos'
+project_name='tdd-builder-centos'
 project_from='centos'
 project_description='Builds a CentOS based docker image for compiling linux kernel, creating test rootfs, running QEMU.'
 
