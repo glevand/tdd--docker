@@ -4,9 +4,10 @@ FROM --platform=linux/386 ${DOCKER_FROM}
 
 ENV TDD_I386_RUNNER 1
 
-# ENV LANGUAGE en_US.UTF-8
-ENV LANG en_US.UTF-8
-ENV LC_ALL C
+ENV LANG='C.UTF-8' \
+	LC_ALL='C.UTF-8' \
+	TDD_386_RUNNER='1' \
+	TDD_386_RUNNER_DEBIAN='1'
 
 RUN apt-get update \
 	&& apt-get -y upgrade \

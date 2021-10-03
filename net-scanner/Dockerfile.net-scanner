@@ -4,8 +4,11 @@ ARG DOCKER_FROM
 
 FROM ${DOCKER_FROM}
 
-ENV TDD_NET_SCANNER 1
-ENV LANG en_US.UTF-8
+ENV LANG='C.UTF-8' \
+	LC_ALL='C.UTF-8' \
+	TDD_NET_SCANNER='1' \
+	TDD_NET_SCANNER_DEBIAN='1' \
+	TDD_NET_SCANNER_DEBIAN_BULLSEYE='1'
 
 RUN echo 'deb-src http://deb.debian.org/debian bullseye main' >> /etc/apt/sources.list \
 	&& echo 'deb http://deb.debian.org/debian bullseye-backports main' >> /etc/apt/sources.list \

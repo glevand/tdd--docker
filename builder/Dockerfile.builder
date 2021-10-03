@@ -4,12 +4,11 @@ ARG DOCKER_FROM
 
 FROM ${DOCKER_FROM}
 
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
-
-ENV TDD_BUILDER 1
-ENV TDD_BUILDER_DEBIAN 1
-ENV TDD_BUILDER_DEBIAN_BULLSEYE 1
+ENV LANG='C.UTF-8' \
+	LC_ALL='C.UTF-8' \
+	TDD_BUILDER='1' \
+	TDD_BUILDER_DEBIAN='1' \
+	TDD_BUILDER_DEBIAN_BULLSEYE='1'
 
 RUN echo 'deb-src http://deb.debian.org/debian bullseye main' >> /etc/apt/sources.list \
 	&& DEBIAN_FRONTEND=noninteractive apt-get update \
@@ -72,7 +71,7 @@ RUN echo 'deb-src http://deb.debian.org/debian bullseye main' >> /etc/apt/source
 		gcc-powerpc-linux-gnu \
 		qemu-system-ppc \
 		openbios-ppc; fi \
-	&& DEBIAN_FRONTEND=noninteractive apt-get -y autoremove \
+	&& DEBIAN_FRONTEND=noninteractive apt-get -y clean \
 	&& rm -rf /var/lib/apt/lists/*
 
 CMD /bin/bash

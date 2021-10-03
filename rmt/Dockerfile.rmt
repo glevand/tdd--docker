@@ -4,8 +4,9 @@ ARG DOCKER_FROM
 
 FROM ${DOCKER_FROM}
 
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
+ENV LANG='C.UTF-8' \
+	LC_ALL='C.UTF-8' \
+	TDD_RMT_SERVER='1'
 
 RUN \
 	zypper --non-interactive ar \
