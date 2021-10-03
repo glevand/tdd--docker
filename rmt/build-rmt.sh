@@ -13,7 +13,7 @@ script_name="${0##*/}"
 real_source="$(realpath "${BASH_SOURCE}")"
 DOCKER_TOP="$(realpath "${DOCKER_TOP:-${real_source%/*}/..}")"
 
-project_name='rmt'
+project_name='tdd-rmt'
 project_from='opensuse'
 project_description='Builds a docker image that contains the SUSE RMT Repository Mirroring Tool server.'
 

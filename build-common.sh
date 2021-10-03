@@ -437,11 +437,11 @@ fi
 
 PROJECT_TOP="${DOCKER_TOP}/${project_name}"
 ARCH_TAG="${ARCH_TAG:-$(arch_tag)}"
-DOCKER_NAME=${DOCKER_NAME:-"tdd-${project_name}"}
+DOCKER_NAME=${DOCKER_NAME:-"${project_name}"}
 DOCKER_TAG="${DOCKER_TAG:-${DOCKER_NAME}:${VERSION}${ARCH_TAG}}"
 
 DOCKER_FILE="${DOCKER_FILE:-${PROJECT_TOP}/Dockerfile.${project_name}}"
-SERVICE_FILE="${SERVICE_FILE:-${PROJECT_TOP}/tdd-${project_name}.service}"
+SERVICE_FILE="${SERVICE_FILE:-${PROJECT_TOP}/${project_name}.service}"
 
 purge=''
 rebuild=''
