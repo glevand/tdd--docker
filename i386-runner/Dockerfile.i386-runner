@@ -2,20 +2,20 @@ ARG DOCKER_FROM
 
 FROM --platform=linux/386 ${DOCKER_FROM}
 
-ENV TDD_I386_RUNNER 1
-
 ENV LANG='C.UTF-8' \
 	LC_ALL='C.UTF-8' \
-	TDD_386_RUNNER='1' \
-	TDD_386_RUNNER_DEBIAN='1'
+	TDD_I386_RUNNER='1' \
+	TDD_I386_RUNNER_DEBIAN='1' \
+	TDD_I386_RUNNER_BULLSEYE='1'
 
-RUN apt-get update \
-	&& apt-get -y upgrade \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+	&& DEBIAN_FRONTEND=noninteractive apt-get -y upgrade \
 	&& DEBIAN_FRONTEND=noninteractive apt-get -y install \
 		apt-utils \
 		bash \
 		bash-completion \
 		file \
+		iputils-ping \
 		libstdc++5 \
 		locales \
 		openssh-client \
@@ -24,12 +24,6 @@ RUN apt-get update \
 		strace \
 		sudo \
 		vim \
-	&& sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen \
-	&& locale-gen \
-	&& update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 LANGUAGE
-
-RUN echo "cleanup filesystem" \
-	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
 CMD ["/bin/bash"]
