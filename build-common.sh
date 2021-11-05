@@ -349,10 +349,28 @@ docker_from_ubuntu() {
 
 	case "${arch}" in
 	amd64)
-		DOCKER_FROM="${DOCKER_FROM:-ubuntu:18.04}"
+		DOCKER_FROM="${DOCKER_FROM:-ubuntu:21.10}"
 		;;
 	arm64)
-		DOCKER_FROM="${DOCKER_FROM:-arm64v8/ubuntu:18.04}"
+		DOCKER_FROM="${DOCKER_FROM:-arm64v8/ubuntu:21.10}"
+		;;
+	*)
+		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
+		exit 1
+		;;
+	esac
+}
+
+docker_from_ubuntu_xenial() {
+	local arch
+	arch="$(get_arch "$(uname -m)")"
+
+	case "${arch}" in
+	amd64)
+		DOCKER_FROM="${DOCKER_FROM:-ubuntu:16.04}"
+		;;
+	arm64)
+		DOCKER_FROM="${DOCKER_FROM:-arm64v8/ubuntu:16.04}"
 		;;
 	*)
 		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
@@ -397,6 +415,9 @@ set_docker_from() {
 		;;
 	ubuntu)
 		docker_from_ubuntu
+		;;
+	ubuntu_xenial)
+		docker_from_ubuntu_xenial
 		;;
 	*)
 		echo "${script_name}: ERROR: Bad project_from: '${from}'" >&2
