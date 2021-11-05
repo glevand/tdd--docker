@@ -15,9 +15,9 @@ DOCKER_TOP="$(realpath "${DOCKER_TOP:-${real_source%/*}/..}")"
 
 project_name='i386-runner'
 project_from='i386_debian'
-project_description='Builds a i386 Debian Buster based Docker image with libstdc++5 support.'
+project_description='Builds a i386 Debian 11 Bullseye based Docker image with libstdc++5 support.'
 
-VERSION=${VERSION:-"1"}
+VERSION=${VERSION:-"2"}
 
 extra_build_args='--platform=linux/386'
 
