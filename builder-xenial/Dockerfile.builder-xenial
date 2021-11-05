@@ -1,0 +1,58 @@
+# An Ubuntu 16.04 Xenial based builder.
+
+ARG DOCKER_FROM
+
+FROM ${DOCKER_FROM}
+
+ENV LANG='C.UTF-8' \
+	LC_ALL='C.UTF-8' \
+	TDD_BUILDER='1' \
+	TDD_BUILDER_UBUNTU='1' \
+	TDD_BUILDER_UBUNTU_XENIAL='1'
+
+RUN DEBIAN_FRONTEND=noninteractive apt update \
+	&& DEBIAN_FRONTEND=noninteractive apt -y upgrade \
+	&& DEBIAN_FRONTEND=noninteractive apt -y install \
+		apt-utils \
+		autoconf \
+		bash-completion \
+		bc \
+		bison \
+		bridge-utils \
+		build-essential \
+		ccache \
+		chrpath \
+		cifs-utils \
+		cpio \
+		curl \
+		diffstat \
+		file \
+		flex \
+		gawk \
+		gcc-multilib \
+		git \
+		git-remote-gcrypt \
+		locales \
+		iputils-ping \
+		libelf-dev \
+		libncurses-dev \
+		libssl-dev \
+		ovmf \
+		parallel \
+		qemu-system-x86 \
+		qemu-utils \
+		rsync \
+		socat \
+		sudo \
+		tcpdump \
+		texinfo \
+		unzip \
+		vim \
+		wget \
+		xz-utils
+
+RUN echo "cleanup filesystem" \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
+
+CMD ["/bin/bash"]
