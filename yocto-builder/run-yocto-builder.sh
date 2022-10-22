@@ -131,7 +131,7 @@ ansi_blue='\[\e[0;34m\]'
 ansi_teal='\[\e[0;36m\]'
 
 cp "${HOME}/.bashrc" "${tmp_dir}/"
-echo "PS1='${ansi_green}\h@\${P_HOST}:${ansi_reset}\w\$ '" > "${tmp_dir}/.bashrc"
+echo "PS1='${ansi_green}\h@\${P_HOST}:${ansi_reset}\w\$ '" >> "${tmp_dir}/.bashrc"
 
 unset docker_user_args
 if [[ ${as_root} ]]; then
