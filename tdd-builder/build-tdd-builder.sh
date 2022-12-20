@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
-build_on_exit() {
-	true
-}
-
 docker_build_setup() {
 	true
 }
 
 host_install_extra() {
+	true
+}
+
+build_on_exit() {
 	true
 }
 
@@ -24,11 +24,11 @@ script_name="${0##*/}"
 real_source="$(realpath "${BASH_SOURCE[0]}")"
 DOCKER_TOP="$(realpath "${DOCKER_TOP:-${real_source%/*}/..}")"
 
-export project_name='builder-xenial'
-export project_from='ubuntu_xenial'
-export project_description='An Ubuntu 16.04 Xenial based builder.'
+export project_name='tdd-builder'
+export project_from='debian'
+export project_description='Builds a docker image that contains tools for the TDD Project.'
 
-VERSION=${VERSION:-"1"}
+VERSION="${VERSION:-4}"
 
 export extra_build_args=''
 
