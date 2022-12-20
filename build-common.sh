@@ -23,8 +23,13 @@ usage () {
 		echo "  DOCKER_FILE   - Default: '${DOCKER_FILE}'"
 		echo "  DOCKER_FROM   - Default: '${DOCKER_FROM}'"
 		echo "  DOCKER_TAG    - Default: '${DOCKER_TAG}'"
-		if [[ ${JENKINS_USER-} ]];then
-			echo "  JENKINS_USER  - Default: '${JENKINS_USER}'"
+		if [[ ${JENKINS_USER-} ]]; then
+			echo "  JENKINS_USER   - Default: '${JENKINS_USER}'"
+			echo "  JENKINS_PASSWD - Default: '${JENKINS_PASSWD}'"
+			echo "  JENKINS_GROUP  - Default: '${JENKINS_GROUP}'"
+			echo "  JENKINS_UID    - Default: '${JENKINS_UID}'"
+			echo "  JENKINS_GID    - Default: '${JENKINS_GID}'"
+			echo "  JENKINS_HOME   - Default: '${JENKINS_HOME}'"
 		fi
 		echo "Examples:"
 		echo "  ${script_name} -v"
@@ -294,11 +299,10 @@ docker_from_jenkins() {
 
 	case "${arch}" in
 	amd64)
-		DOCKER_FROM="${DOCKER_FROM:-jenkins/jenkins:lts}"
+		DOCKER_FROM="${DOCKER_FROM:-jenkins/jenkins:lts-jdk17}"
 		;;
 	arm64)
-		echo "arm64 not available"
-		exit 1
+		DOCKER_FROM="${DOCKER_FROM:-jenkins/jenkins:lts-jdk17}"
 		;;
 	*)
 		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
@@ -473,8 +477,6 @@ debug=''
 install=''
 start=''
 enable=''
-extra_build_args=''
-
 
 process_opts "${@}"
 
@@ -499,18 +501,6 @@ fi
 
 tmp_dir="$(mktemp --directory --tmpdir "tdd-${script_name}-XXXX")"
 
-# Support for docker versions older than 17.05.
-# See https://github.com/moby/moby/issues/32457
-if [[ $(version "$(docker version --format '{{.Server.Version}}')") < $(version "17.05") ]]; then
-	tmp_file="${DOCKER_FILE}.tmp"
-	trap "rm -f ${tmp_file}" EXIT
-
-	cp -f "${DOCKER_FILE}" "${tmp_file}"
-	DOCKER_FILE="${tmp_file}"
-	sed --in-place "s|ARG DOCKER_FROM||" "${tmp_file}"
-	sed --in-place "s|\${DOCKER_FROM}|${DOCKER_FROM}|" "${tmp_file}"
-fi
-
 do_build=1
 
 if [[ ${purge} ]] && docker inspect --type image "${DOCKER_TAG}" &>/dev/null; then
@@ -518,7 +508,7 @@ if [[ ${purge} ]] && docker inspect --type image "${DOCKER_TAG}" &>/dev/null; th
 	docker rmi --force "${DOCKER_TAG}"
 elif [[ ! ${rebuild} ]] && docker inspect --type image "${DOCKER_TAG}" &>/dev/null; then
 	echo "Docker image exists: ${DOCKER_TAG}" >&2
-	do_build=
+	do_build=''
 fi
 
 cd "${PROJECT_TOP}"
@@ -532,11 +522,22 @@ if [[ ${do_build} ]]; then
 
 	echo "${script_name}: extra_build_args='${extra_build_args}'" >&2
 
+#		--force-rm \
+
+	if [[ ${verbose} ]]; then
+	{
+		echo "-----------------"
+		echo "PROJECT_TOP = '${PROJECT_TOP}'"
+		echo "pwd = '$(pwd)'"
+		echo "-----------------"
+	} >&2
+	fi
+
 	docker build \
 		--file "${DOCKER_FILE}" \
-		--build-arg DOCKER_FROM="${DOCKER_FROM}" \
 		--tag "${DOCKER_TAG}" \
 		--network=host \
+		--build-arg DOCKER_FROM="${DOCKER_FROM}" \
 		${extra_build_args:+${extra_build_args}} \
 		.
 fi
@@ -567,8 +568,6 @@ if [[ -f ${SERVICE_FILE} ]]; then
 		systemctl --no-pager status "${service_name}"
 	fi
 fi
-
-show_tag
 
 trap "on_exit 'Success.'" EXIT
 exit 0
