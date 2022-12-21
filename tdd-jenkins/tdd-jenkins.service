@@ -16,14 +16,15 @@ RuntimeDirectory=tdd-store/%n
 
 ExecStartPre=-/bin/sh -c '/usr/bin/docker rm -f %n 2>/dev/null'
 
-ExecStart=/usr/bin/docker run --init --rm \
+ExecStart=/usr/bin/docker run --rm \
+	--init \
 	--name %n \
 	--network host \
 	--env "TDD_STORE=/run/tdd-store/%n" \
-	-v /run/tdd-store/%n:/run/tdd-store/%n \
-	-v jenkins_home:/var/jenkins_home \
-	-v /var/run/docker.sock:/var/run/docker.sock \
-	tdd-jenkins:1
+	--mount type=bind,source=/run/tdd-store/%n,dst=/run/tdd-store/%n \
+	--mount type=volume,source=jenkins-home,dst=/var/jenkins_home \
+	--mount type=bind,source=/run/docker.sock,dst=/run/docker.sock \
+	tdd-jenkins:2-amd64
 
 # FIXME: Need to make this return success on shutdown.
 ExecStop=/usr/bin/docker stop %n

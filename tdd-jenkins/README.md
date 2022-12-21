@@ -4,33 +4,18 @@ A framework for test driven Linux software development.
 
 ## TDD Jenkins Service
 
-### Host System Jenkins User
-
-Although not required, to ease system setup and maintenece it is recommended to
-add a host system Jenkins user with the same user and group names and id values
-as those of the Jenkins user in the Jenkins container.  The
-[useradd-jenkins.sh](https://github.com/glevand/tdd-project/blob/master/scripts/useradd-jenkins.sh)
-script can be used to do this.
-
-If a host system Jenkins user other than the default is used the `JENKINS_USER`
-environment variable must be set when calling the
-[build-jenkins.sh](https://github.com/glevand/tdd--docker/blob/master/jenkins/build-jenkins.sh)
-or
-[docker-build-all.sh](https://github.com/glevand/tdd--docker/blob/master/docker-build-all.sh)
-scripts.
-
 ### Install Service
 
 To build, install and start the TDD Jenkins service use the
-[build-jenkins.sh](https://github.com/glevand/tdd--docker/blob/master/jenkins/build-jenkins.sh)
+[build-jenkins.sh](https://github.com/glevand/tdd--docker/blob/master/tdd-jenkins/build-jenkins.sh)
 script:
 
 ```sh
-docker/jenkins/build-jenkins.sh --purge --install --enable --start
+docker/tdd-jenkins/build-jenkins.sh --purge --install --enable --start
 ```
 
 Once the
-[build-jenkins.sh](https://github.com/glevand/tdd--docker/blob/master/jenkins/build-jenkins.sh)
+[build-jenkins.sh](https://github.com/glevand/tdd--docker/blob/master/tdd-jenkins/build-jenkins.sh)
 script has completed the status of the tdd-jenkins.service can be checked with
 commands like these:
 
@@ -65,7 +50,7 @@ Once the 'Getting Started' dialogs are complete the
 `Please create new jobs to get started` message is presented.  To create the
 TDD jobs navigate to the `${JENKINS_URL}/script` page. Copy and paste
 the contents of the
-[jenkins/job-setup/job-setup.groovy](https://github.com/glevand/tdd-project/blob/master/jenkins/job-setup/job-setup.groovy)
+[jenkins/job-setup/job-setup.groovy](https://github.com/glevand/tdd-project/blob/master/tdd-jenkins/job-setup/job-setup.groovy)
 file into the 'Script Console' dialog box and press the 'RUN' button.
 
 Once run, the 'Result' should be `Jenkins jobs were successfully created`.

@@ -1,0 +1,63 @@
+# Jenkins image for the TDD Project.
+
+ARG DOCKER_FROM
+FROM ${DOCKER_FROM}
+
+ENV LANG='C.UTF-8' \
+	LC_ALL='C.UTF-8' \
+	TDD_JENKINS='1' \
+	TDD_JENKINS_DEBIAN='1'
+
+USER root
+
+RUN apt-get update \
+	&& apt-get -y upgrade \
+	&& DEBIAN_FRONTEND=noninteractive apt-get -y install \
+		apt-transport-https \
+		bash \
+		binfmt-support \
+		ca-certificates \
+		curl \
+		dnsutils \
+		git \
+		gnupg2 \
+		gosu \
+		iproute2 \
+		procps \
+		rsync \
+		software-properties-common \
+		sudo \
+		vim \
+	&& DEBIAN_FRONTEND=noninteractive apt-get -y clean \
+	&& rm -v -rf /var/lib/apt/lists/*
+
+ARG JENKINS_USER
+ARG JENKINS_PASSWD
+ARG JENKINS_GROUP
+ARG JENKINS_UID
+ARG JENKINS_GID
+ARG JENKINS_HOME
+ARG host_docker_gid
+
+ENV TDD_JENKINS 1
+ENV JENKINS_USER ${JENKINS_USER}
+ENV JENKINS_HOME ${JENKINS_HOME}
+ENV COPY_REFERENCE_FILE_LOG ${JENKINS_HOME}/copy_reference_file.log
+
+RUN groupadd -g ${host_docker_gid} docker \
+	&& usermod -a -G docker,sudo "${JENKINS_USER}" \
+	&& echo "${JENKINS_USER}:${JENKINS_PASSWD}" | chpasswd \
+	&& echo "%${JENKINS_USER} ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/${JENKINS_USER}" \
+	&& echo 'Defaults lecture = never' > '/etc/sudoers.d/lecture' \
+	&& mkdir -p "${JENKINS_HOME}" \
+	&& chown -R ${JENKINS_USER}: "${JENKINS_HOME}"
+
+VOLUME ${JENKINS_HOME}
+
+RUN jenkins-plugin-cli --plugins "blueocean copyartifact rebuild ssh-agent dashboard-view"
+
+USER ${JENKINS_USER}
+
+COPY tdd-jenkins-helper.sh /usr/local/bin/
+
+ENTRYPOINT ["/usr/local/bin/tdd-jenkins-helper.sh"]
