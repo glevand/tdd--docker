@@ -12,11 +12,13 @@ Restart=always
 ExecStartPre=/bin/bash -c '/usr/bin/docker inspect %n &> /dev/null \
 	&& /usr/bin/docker rm -f %n || :'
 
-ExecStart=/usr/bin/docker run --rm --name %n -p 9600:9600/tcp \
-	-v /etc/tdd-relay.conf:/etc/tdd-relay.conf \
-	@@docker-tag@@
+ExecStart=/usr/bin/docker run --rm \
+	--name %n \
+	--publish 9600:9600/tcp \
+	--volume /etc/tdd-relay.conf:/etc/tdd-relay.conf \
+	glevand/tdd-relay:latest
 
-ExecStop=/usr/bin/docker stop %n
+ExecStop=/usr/bin/docker stop %n || :
 
 [Install]
 WantedBy=multi-user.target
