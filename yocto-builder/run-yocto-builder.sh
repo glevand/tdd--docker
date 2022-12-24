@@ -1,55 +1,50 @@
 #!/usr/bin/env bash
 
-usage () {
+usage() {
 	local old_xtrace
 	old_xtrace="$(shopt -po xtrace || :)"
 	set +o xtrace
-	echo "${script_name} - Runs a yocto-builder container.  If no command is provided, runs an interactive container with the current directory as the container's working directory." >&2
-	echo "Usage: ${script_name} [flags] -- [command] [args]" >&2
-	echo "Option flags:" >&2
-	echo "  -h --help           - Show this help and exit." >&2
-	echo "  -v --verbose        - Verbose execution." >&2
-	echo "  -a --docker-args    - Args for docker run. Default: '${docker_args}'" >&2
-	echo "  -n --container-name - Container name. Default: '${container_name}'." >&2
-	echo "  -t --docker-tag     - Docker tag. Default: '${docker_tag}'." >&2
-	echo "  -r --as-root        - Run as root user." >&2
-	echo "Args:" >&2
-	echo "  command             - Default: '${user_cmd}'" >&2
-	echo "Examples:" >&2
-	echo "  ${script_name} -v" >&2
+
+	{
+		echo "${script_name} - Runs a yocto-builder container."
+		echo "Usage: ${script_name} [flags] -- [command] [args]"
+		echo "Option flags:"
+		echo "  -n --container-name - Container name. Default: '${container_name}'."
+		echo "  -a --docker-args    - Args for docker run. Default: '${docker_args}'"
+		echo "  -t --docker-tag     - Docker tag. Default: '${docker_tag}'."
+		echo "  -r --as-root        - Run as root user. Default: '${as_root}'."
+		echo "  -h --help           - Show this help and exit."
+		echo "  -v --verbose        - Verbose execution. Default: '${verbose}'."
+		echo "  -g --debug          - Extra verbose execution. Default: '${debug}'."
+		echo "Args:"
+		echo "  command             - Default: '${user_cmd}'"
+		echo "Info:"
+		echo "  If no command is provided, runs an interactive container with"
+		echo "  the current directory as the container's working directory."
+		echo
+		print_project_info
+	} >&2
 	eval "${old_xtrace}"
 }
 
 process_opts() {
-	local short_opts="hva:n:t:r"
-	local long_opts="help,verbose,docker-args:,container-name:,docker-tag:,as-root"
+	local short_opts='n:a:t:rhvg'
+	local long_opts='container-name:,docker-args:,docker-tag:,as-root,help,verbose,debug'
 
 	local opts
-	if ! opts=$(getopt --options ${short_opts} --long ${long_opts} -n "${script_name}" -- "$@"); then
-		echo "${script_name}: ERROR: Internal getopt" >&2
-		exit 1
-	fi
+	opts=$(getopt --options ${short_opts} --long ${long_opts} -n "${script_name}" -- "$@")
 
 	eval set -- "${opts}"
 
 	while true ; do
 		# echo "${FUNCNAME[0]}: (${#}) '${*}'"
 		case "${1}" in
-		-h | --help)
-			usage=1
-			shift
-			;;
-		-v | --verbose)
-			set -x
-			#verbose=1
-			shift
+		-n | --container-name)
+			container_name="${2}"
+			shift 2
 			;;
 		-a | --docker-args)
 			docker_args="${2}"
-			shift 2
-			;;
-		-n | --container-name)
-			container_name="${2}"
 			shift 2
 			;;
 		-t | --docker-tag)
@@ -60,9 +55,25 @@ process_opts() {
 			as_root=1
 			shift
 			;;
+		-h | --help)
+			usage=1
+			shift
+			;;
+		-v | --verbose)
+			verbose=1
+			shift
+			;;
+		-g | --debug)
+			verbose=1
+			debug=1
+			set -x
+			shift
+			;;
 		--)
 			shift
-			user_cmd="${*}"
+			if [[ ${1:-} ]]; then
+				user_cmd="${*}"
+			fi
 			break
 			;;
 		*)
@@ -73,14 +84,32 @@ process_opts() {
 	done
 }
 
+print_project_banner() {
+	echo "${script_name} (@PACKAGE_NAME@) - ${start_time}"
+}
+
+print_project_info() {
+	echo "  @PACKAGE_NAME@ ${script_name}"
+	echo "  Version: @PACKAGE_VERSION@"
+	echo "  Project Home: @PACKAGE_URL@"
+}
+
 on_exit() {
 	local result=${1}
 
-	if [ -d "${tmp_dir}" ]; then
-		rm -rf "${tmp_dir}"
-	fi
+	local sec="${SECONDS}"
 
-	echo "${script_name}: ${result}" >&2
+	set +x
+	echo "${script_name}: Done: ${result}, ${sec} sec." >&2
+}
+
+on_err() {
+	local f_name=${1}
+	local line_no=${2}
+	local err_no=${3}
+
+	echo "${script_name}: ERROR: function=${f_name}, line=${line_no}, result=${err_no}"
+	exit "${err_no}"
 }
 
 #===============================================================================
@@ -88,30 +117,45 @@ export PS4='\[\e[0;33m\]+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):\[
 
 script_name="${0##*/}"
 
-if [ "${TDD_YOCTO_BUILDER}" ]; then
-	echo "${script_name}: ERROR: Already in yocto-builder." >&2
-	exit 1
-fi
+SECONDS=0
+start_time="$(date +%Y.%m.%d-%H.%M.%S)"
 
-real_source="$(realpath "${BASH_SOURCE}")"
+real_source="$(realpath "${BASH_SOURCE[0]}")"
 SCRIPT_TOP="$(realpath "${SCRIPT_TOP:-${real_source%/*}}")"
 
-trap "on_exit 'Done, failed.'" EXIT
-set -e
+trap "on_exit 'Failed'" EXIT
+trap 'on_err ${FUNCNAME[0]:-main} ${LINENO} ${?}' ERR
+trap 'on_err SIGUSR1 ? 3' SIGUSR1
+
+set -eE
+set -o pipefail
+set -o nounset
+
+container_name='yocto-builder'
+docker_args=''
+docker_tag='glevand/yocto-builder:latest'
+as_root=''
+usage=''
+verbose=''
+debug=''
+
+user_cmd='/bin/bash'
+histfile="$(pwd)/${container_name}--bash_history"
+run_check="${TDD_YOCTO_BUILDER:-}"
 
 process_opts "${@}"
-
-container_name=${container_name:-"yocto-builder"}
-docker_tag=${docker_tag:-"glevand/yocto-builder:latest"}
-histfile=${histfile:-"$(pwd)/${container_name}--bash_history"}
-user_cmd=${user_cmd:-"/bin/bash"}
-
-unset docker_extra_args
 
 if [[ ${usage} ]]; then
 	usage
 	trap - EXIT
 	exit 0
+fi
+
+print_project_banner >&2
+
+if [ ${run_check} ]; then
+	echo "${script_name}: ERROR: Already in ${container_name}." >&2
+	exit 1
 fi
 
 tmp_dir="$(mktemp --tmpdir --directory "${script_name}.XXXX")"
@@ -120,6 +164,7 @@ if [[ ! ${SSH_AUTH_SOCK} ]]; then
 	echo "${script_name}: ERROR: SSH_AUTH_SOCK not defined." >&2
 fi
 
+docker_extra_args=''
 if ! echo "${docker_args}" | grep -q ' -w '; then
 	docker_extra_args+=" -v '$(pwd)':'$(pwd)' -w '$(pwd)'"
 fi
@@ -133,8 +178,8 @@ ansi_teal='\[\e[0;36m\]'
 cp "${HOME}/.bashrc" "${tmp_dir}/"
 echo "PS1='${ansi_green}\h@\${P_HOST}:${ansi_reset}\w\$ '" >> "${tmp_dir}/.bashrc"
 
-unset docker_user_args
 if [[ ${as_root} ]]; then
+	docker_user_args=''
 	docker_bash_args=" -v ${tmp_dir}/.bashrc:/root/.bashrc"
 else
 	docker_user_args=" \
@@ -154,9 +199,7 @@ fi
 
 echo "${script_name}: INFO: docker_extra_args = '${docker_extra_args}'" >&2
 
-#xhost + local:docker
-
-unset docker_kvm_args
+docker_kvm_args=''
 if [[ -c "/dev/kvm" ]]; then
 	docker_kvm_args=" --device /dev/kvm --group-add $(stat --format=%g /dev/kvm)"
 fi
@@ -192,5 +235,5 @@ eval "docker run \
 	${docker_tag} \
 	${user_cmd}"
 
-trap - EXIT
-on_exit 'Done, success.'
+trap $'on_exit "Success"' EXIT
+exit 0

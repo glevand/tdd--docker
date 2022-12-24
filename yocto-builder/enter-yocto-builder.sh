@@ -1,56 +1,71 @@
 #!/usr/bin/env bash
 
-usage () {
+usage() {
 	local old_xtrace
 	old_xtrace="$(shopt -po xtrace || :)"
 	set +o xtrace
-	echo "${script_name} - Enter a running yocto-builder container." >&2
-	echo "Usage: ${script_name} [flags] -- [command] [args]" >&2
-	echo "Option flags:" >&2
-	echo "  -h --help           - Show this help and exit." >&2
-	echo "  -v --verbose        - Verbose execution." >&2
-	echo "  -n --container-name - Container name. Default: '${container_name}'." >&2
-	echo "  -p --as-privileged  - Run command as privileged." >&2
-	echo "Args:" >&2
-	echo "  command             - Default: '${user_cmd}'" >&2
+
+	{
+		echo "${script_name} - Enter a running yocto-builder container."
+		echo "Usage: ${script_name} [flags] -- [command] [args]"
+		echo "Option flags:"
+		echo "  -n --container-name - Container name. Default: '${container_name}'."
+		echo "  -a --docker-args    - Extra args for docker exec. Default: '${docker_args}'"
+		echo "  -p --as-privileged  - Run command as privileged. Default: '${as_privileged}'."
+		echo "  -h --help           - Show this help and exit."
+		echo "  -v --verbose        - Verbose execution. Default: '${verbose}'."
+		echo "  -g --debug          - Extra verbose execution. Default: '${debug}'."
+		echo "Args:"
+		echo "  command             - Default: '${user_cmd}'"
+		echo "Info:"
+		print_project_info
+	} >&2
 	eval "${old_xtrace}"
 }
 
 process_opts() {
-	local short_opts="hvn:p"
-	local long_opts="help,verbose,container-name:,as-privileged"
+	local short_opts='n:a:phvg'
+	local long_opts='container-name:,docker-args:,as-privileged,help,verbose,debug'
 
 	local opts
-	if ! opts=$(getopt --options ${short_opts} --long ${long_opts} -n "${script_name}" -- "$@"); then
-		echo "${script_name}: ERROR: Internal getopt" >&2
-		exit 1
-	fi
+	opts=$(getopt --options ${short_opts} --long ${long_opts} -n "${script_name}" -- "$@")
 
 	eval set -- "${opts}"
 
 	while true ; do
 		# echo "${FUNCNAME[0]}: (${#}) '${*}'"
 		case "${1}" in
-		-h | --help)
-			usage=1
-			shift
-			;;
-		-v | --verbose)
-			set -x
-			#verbose=1
-			shift
-			;;
 		-n | --container-name)
 			container_name="${2}"
+			shift 2
+			;;
+		-a | --docker-args)
+			docker_args="${2}"
 			shift 2
 			;;
 		-p | --as-privileged)
 			as_privileged=1
 			shift
 			;;
+		-h | --help)
+			usage=1
+			shift
+			;;
+		-v | --verbose)
+			verbose=1
+			shift
+			;;
+		-g | --debug)
+			verbose=1
+			debug=1
+			set -x
+			shift
+			;;
 		--)
 			shift
-			user_cmd="${*}"
+			if [[ ${1:-} ]]; then
+				user_cmd="${*}"
+			fi
 			break
 			;;
 		*)
@@ -61,14 +76,32 @@ process_opts() {
 	done
 }
 
+print_project_banner() {
+	echo "${script_name} (@PACKAGE_NAME@) - ${start_time}"
+}
+
+print_project_info() {
+	echo "  @PACKAGE_NAME@ ${script_name}"
+	echo "  Version: @PACKAGE_VERSION@"
+	echo "  Project Home: @PACKAGE_URL@"
+}
+
 on_exit() {
 	local result=${1}
 
-	if [ -d "${tmp_dir}" ]; then
-		rm -rf "${tmp_dir}"
-	fi
+	local sec="${SECONDS}"
 
-	echo "${script_name}: ${result}" >&2
+	set +x
+	echo "${script_name}: Done: ${result}, ${sec} sec." >&2
+}
+
+on_err() {
+	local f_name=${1}
+	local line_no=${2}
+	local err_no=${3}
+
+	echo "${script_name}: ERROR: function=${f_name}, line=${line_no}, result=${err_no}"
+	exit "${err_no}"
 }
 
 #===============================================================================
@@ -76,23 +109,31 @@ export PS4='\[\e[0;33m\]+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):\[
 
 script_name="${0##*/}"
 
-real_source="$(realpath "${BASH_SOURCE}")"
+SECONDS=0
+start_time="$(date +%Y.%m.%d-%H.%M.%S)"
+
+real_source="$(realpath "${BASH_SOURCE[0]}")"
 SCRIPT_TOP="$(realpath "${SCRIPT_TOP:-${real_source%/*}}")"
 
-if [ "${TDD_YOCTO_BUILDER}" ]; then
-	echo "${script_name}: ERROR: Already in yocto-builder." >&2
-	exit 1
-fi
+trap "on_exit 'Failed'" EXIT
+trap 'on_err ${FUNCNAME[0]:-main} ${LINENO} ${?}' ERR
+trap 'on_err SIGUSR1 ? 3' SIGUSR1
 
-trap "on_exit 'Done, failed.'" EXIT
-set -e
+set -eE
+set -o pipefail
+set -o nounset
+
+container_name='yocto-builder'
+docker_args=''
+as_privileged=''
+usage=''
+verbose=''
+debug=''
+user_cmd='/bin/bash'
+
+run_check="${TDD_YOCTO_BUILDER:-}"
 
 process_opts "${@}"
-
-container_name=${container_name:-"yocto-builder"}
-user_cmd=${user_cmd:-"/bin/bash"}
-
-unset docker_extra_args
 
 if [[ ${usage} ]]; then
 	usage
@@ -100,11 +141,20 @@ if [[ ${usage} ]]; then
 	exit 0
 fi
 
-if [[ ${as_privileged} ]]; then
-	docker_extra_args=" --privileged"
+print_project_banner >&2
+
+if [ ${run_check} ]; then
+	echo "${script_name}: ERROR: Already in ${container_name}." >&2
+	exit 1
 fi
 
-eval "docker exec -it ${docker_extra_args} ${container_name} ${user_cmd}"
+if [[ ${as_privileged} ]]; then
+	docker_extra_args=' --privileged'
+else
+	docker_extra_args=''
+fi
 
-trap - EXIT
-on_exit 'Done, success.'
+eval "docker exec -it ${docker_args} ${docker_extra_args} ${container_name} ${user_cmd}"
+
+trap $'on_exit "Success"' EXIT
+exit 0
