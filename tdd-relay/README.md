@@ -7,15 +7,15 @@ A framework for test driven Linux software development.
 ### Install Service
 
 To build, install and start the tdd-relay service use the
-[build-relay.sh](https://github.com/glevand/tdd--docker/blob/master/relay/build-relay.sh)
+[build-relay.sh](https://github.com/glevand/tdd--docker/blob/master/tdd-relay/build-relay.sh)
 script:
 
 ```sh
-docker/relay/build-relay.sh --purge --install --enable --start
+docker/tdd-relay/build-relay.sh --purge --install --enable --start
 ```
 
 Once the
-[build-relay.sh](https://github.com/glevand/tdd--docker/blob/master/relay/build-relay.sh)
+[build-relay.sh](https://github.com/glevand/tdd--docker/blob/master/tdd-relay/build-relay.sh)
 script has completed the tdd-relay service can be managed with commands like
 these:
 
@@ -42,7 +42,7 @@ docker exec -it tdd-relay.service bash
 
 ```sh
 sudo systemctl stop tdd-relay
-docker/relay/build-relay.sh -p
+docker/tdd-relay/build-relay.sh -p
 sudo systemctl start tdd-relay
 ```
 
