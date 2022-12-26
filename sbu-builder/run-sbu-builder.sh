@@ -1,56 +1,50 @@
 #!/usr/bin/env bash
 
-usage () {
+usage() {
 	local old_xtrace
 	old_xtrace="$(shopt -po xtrace || :)"
 	set +o xtrace
+
 	{
 		echo "${script_name} - Runs a sbu-builder container."
 		echo "Usage: ${script_name} [flags] -- [command] [args]"
-		echo 'Option flags:'
-		echo "  -a --docker-args    - Args for docker run. Default: '${docker_args}'"
+		echo "Option flags:"
 		echo "  -n --container-name - Container name. Default: '${container_name}'."
+		echo "  -a --docker-args    - Args for docker run. Default: '${docker_args}'"
 		echo "  -t --docker-tag     - Docker tag. Default: '${docker_tag}'."
-		echo "  -r --as-root        - Run as root user."
+		echo "  -r --as-root        - Run as root user. Default: '${as_root}'."
 		echo "  -h --help           - Show this help and exit."
-		echo "  -v --verbose        - Verbose execution."
-		echo "  -g --debug          - Extra verbose execution."
-		echo 'Args:'
+		echo "  -v --verbose        - Verbose execution. Default: '${verbose}'."
+		echo "  -g --debug          - Extra verbose execution. Default: '${debug}'."
+		echo "Args:"
 		echo "  command             - Default: '${user_cmd}'"
-		echo 'Examples:'
-		echo "  ${script_name} -v"
-		echo "Notes:"
-		echo "  If no command is provided, runs an interactive container with the current"
-		echo "  directory as the container's working directory."
 		echo "Info:"
-		echo "  ${script_name} (@PACKAGE_NAME@) version @PACKAGE_VERSION@"
-		echo "  @PACKAGE_URL@"
-		echo '  Send bug reports to: Geoff Levand <geoff@infradead.org>.'
+		echo "  If no command is provided, runs an interactive container with"
+		echo "  the current directory as the container's working directory."
+		echo
+		print_project_info
 	} >&2
 	eval "${old_xtrace}"
 }
 
 process_opts() {
-	local short_opts="a:n:t:rhvg"
-	local long_opts="docker-args:,container-name:,docker-tag:,as-root,help,verbose,debug"
+	local short_opts='n:a:t:rhvg'
+	local long_opts='container-name:,docker-args:,docker-tag:,as-root,help,verbose,debug'
 
 	local opts
-	if ! opts=$(getopt --options ${short_opts} --long ${long_opts} -n "${script_name}" -- "$@"); then
-		echo "${script_name}: ERROR: Internal getopt" >&2
-		exit 1
-	fi
+	opts=$(getopt --options ${short_opts} --long ${long_opts} -n "${script_name}" -- "$@")
 
 	eval set -- "${opts}"
 
 	while true ; do
 		# echo "${FUNCNAME[0]}: (${#}) '${*}'"
 		case "${1}" in
-		-a | --docker-args)
-			docker_args="${2}"
-			shift 2
-			;;
 		-n | --container-name)
 			container_name="${2}"
+			shift 2
+			;;
+		-a | --docker-args)
+			docker_args="${2}"
 			shift 2
 			;;
 		-t | --docker-tag)
@@ -70,14 +64,16 @@ process_opts() {
 			shift
 			;;
 		-g | --debug)
-			set -x
 			verbose=1
 			debug=1
+			set -x
 			shift
 			;;
 		--)
 			shift
-			user_cmd="${*}"
+			if [[ ${1:-} ]]; then
+				user_cmd="${*}"
+			fi
 			break
 			;;
 		*)
@@ -88,19 +84,23 @@ process_opts() {
 	done
 }
 
+print_project_banner() {
+	echo "${script_name} (@PACKAGE_NAME@) - ${start_time}"
+}
+
+print_project_info() {
+	echo "  @PACKAGE_NAME@ ${script_name}"
+	echo "  Version: @PACKAGE_VERSION@"
+	echo "  Project Home: @PACKAGE_URL@"
+}
+
 on_exit() {
 	local result=${1}
 
-	if [[ -d "${tmp_dir:-}" ]]; then
-		if [[ ${keep_tmp_dir:-} ]]; then
-			echo "${script_name}: INFO: tmp dir preserved: '${tmp_dir}'" >&2
-		else
-			rm -rf "${tmp_dir:?}"
-		fi
-	fi
+	local sec="${SECONDS}"
 
 	set +x
-	echo "${script_name}: Done: ${result}." >&2
+	echo "${script_name}: Done: ${result}, ${sec} sec." >&2
 }
 
 on_err() {
@@ -108,7 +108,7 @@ on_err() {
 	local line_no=${2}
 	local err_no=${3}
 
-	echo "${script_name}: ERROR: function=${f_name}, line=${line_no}, result=${err_no}" >&2
+	echo "${script_name}: ERROR: function=${f_name}, line=${line_no}, result=${err_no}"
 	exit "${err_no}"
 }
 
@@ -116,37 +116,32 @@ on_err() {
 export PS4='\[\e[0;33m\]+ ${BASH_SOURCE##*/}:${LINENO}:(${FUNCNAME[0]:-main}):\[\e[0m\] '
 
 script_name="${0##*/}"
-base_name="${script_name##*/%}"
-base_name="${base_name%.sh*}"
 
-real_source="$(realpath "${BASH_SOURCE}")"
-SCRIPT_TOP="$(realpath "${SCRIPT_TOP:-${real_source%/*}}")"
-
-start_time="$(date +%Y.%m.%d-%H.%M.%S)"
 SECONDS=0
+start_time="$(date +%Y.%m.%d-%H.%M.%S)"
+
+real_source="$(realpath "${BASH_SOURCE[0]}")"
+SCRIPT_TOP="$(realpath "${SCRIPT_TOP:-${real_source%/*}}")"
 
 trap "on_exit 'Failed'" EXIT
 trap 'on_err ${FUNCNAME[0]:-main} ${LINENO} ${?}' ERR
+trap 'on_err SIGUSR1 ? 3' SIGUSR1
+
 set -eE
 set -o pipefail
 set -o nounset
 
-if [ "${TDD_SBU_BUILDER:-}" ]; then
-	echo "${script_name}: ERROR: Already in sbu-builder." >&2
-	exit 1
-fi
-
+container_name='sbu-builder'
 docker_args=''
-container_name=${container_name:-"sbu-builder"}
-docker_tag=${docker_tag:-"glevand/sbu-builder:latest"}
+docker_tag='glevand/sbu-builder:latest'
 as_root=''
 usage=''
 verbose=''
 debug=''
 
-histfile=${histfile:-"$(pwd)/${container_name}--bash_history"}
-user_cmd=${user_cmd:-"/bin/bash"}
-docker_extra_args=''
+user_cmd='/bin/bash'
+histfile="$(pwd)/${container_name}--bash_history"
+run_check="${SBU_BUILDER:-}"
 
 process_opts "${@}"
 
@@ -156,12 +151,20 @@ if [[ ${usage} ]]; then
 	exit 0
 fi
 
+print_project_banner >&2
+
+if [ ${run_check} ]; then
+	echo "${script_name}: ERROR: Already in ${container_name}." >&2
+	exit 1
+fi
+
 tmp_dir="$(mktemp --tmpdir --directory "${script_name}.XXXX")"
 
 if [[ ! ${SSH_AUTH_SOCK} ]]; then
 	echo "${script_name}: ERROR: SSH_AUTH_SOCK not defined." >&2
 fi
 
+docker_extra_args=''
 if ! echo "${docker_args}" | grep -q ' -w '; then
 	docker_extra_args+=" -v '$(pwd)':'$(pwd)' -w '$(pwd)'"
 fi
@@ -175,8 +178,8 @@ ansi_teal='\[\e[0;36m\]'
 cp "${HOME}/.bashrc" "${tmp_dir}/"
 echo "PS1='${ansi_green}\h@\${P_HOST}:${ansi_reset}\w\$ '" >> "${tmp_dir}/.bashrc"
 
-unset docker_user_args
 if [[ ${as_root} ]]; then
+	docker_user_args=''
 	docker_bash_args=" -v ${tmp_dir}/.bashrc:/root/.bashrc"
 else
 	docker_user_args=" \
@@ -196,9 +199,7 @@ fi
 
 echo "${script_name}: INFO: docker_extra_args = '${docker_extra_args}'" >&2
 
-#xhost + local:docker
-
-unset docker_kvm_args
+docker_kvm_args=''
 if [[ -c "/dev/kvm" ]]; then
 	docker_kvm_args=" --device /dev/kvm --group-add $(stat --format=%g /dev/kvm)"
 fi
@@ -234,5 +235,5 @@ eval "docker run \
 	${docker_tag} \
 	${user_cmd}"
 
-trap - EXIT
-on_exit 'Done, success.'
+trap $'on_exit "Success"' EXIT
+exit 0
