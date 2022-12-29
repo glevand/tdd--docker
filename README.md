@@ -14,7 +14,7 @@ The
 script will bulid all the TDD containers and can also install and enable the
 systemd services of those containers that have them.  Individual containers and
 services can be build and/or setup with the container's build script,
-[build-jenkins.sh](https://github.com/glevand/tdd--docker/blob/master/jenkins/build-jenkins.sh)
+[build-jenkins.sh](https://github.com/glevand/tdd--docker/blob/master/tdd-jenkins/build-jenkins.sh)
 for example.
 
 ## Licence & Usage
