@@ -50,7 +50,7 @@ Once the 'Getting Started' dialogs are complete the
 `Please create new jobs to get started` message is presented.  To create the
 TDD jobs navigate to the `${JENKINS_URL}/script` page. Copy and paste
 the contents of the
-[jenkins/job-setup/job-setup.groovy](https://github.com/glevand/tdd-project/blob/master/tdd-jenkins/job-setup/job-setup.groovy)
+[jenkins/job-setup/job-setup.groovy](https://github.com/glevand/tdd-project/blob/master/jenkins/job-setup/job-setup.groovy)
 file into the 'Script Console' dialog box and press the 'RUN' button.
 
 Once run, the 'Result' should be `Jenkins jobs were successfully created`.
