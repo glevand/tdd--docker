@@ -21,6 +21,7 @@ RUN echo 'deb-src http://deb.debian.org/debian bullseye main' >> /etc/apt/source
 		curl \
 		dnsutils \
 		ipmitool \
+		iproute2 \
 		iputils-ping \
 		locales \
 		netcat-openbsd \
@@ -34,12 +35,10 @@ RUN echo 'deb-src http://deb.debian.org/debian bullseye main' >> /etc/apt/source
 		wget \
 	&& sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen \
 	&& locale-gen \
-	&& update-locale LANG=en_US.UTF-8
-
-COPY u-install /
-
-RUN echo "cleanup filesystem" \
+	&& update-locale LANG=en_US.UTF-8 \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
+
+COPY u-install /
 
 CMD ["/bin/bash"]
