@@ -26,7 +26,7 @@ DOCKER_TOP="$(realpath "${DOCKER_TOP:-${real_source%/*}/..}")"
 
 export project_name='yocto-builder'
 export project_from='debian'
-export project_description='Builds a Debian 11 Bullseye based image that contains tools for working with the Yocto project.'
+export project_description='Builds a Debian based image that contains tools for working with the Yocto project.'
 
 VERSION="${VERSION:-6}"
 

@@ -8,7 +8,7 @@ ENV LANG='C.UTF-8' \
 	LC_ALL='C.UTF-8' \
 	TDD_RELAY='1' \
 	TDD_RELAY_DEBIAN='1' \
-	TDD_RELAY_DEBIAN_BULLSEYE='1'
+	TDD_RELAY_DEBIAN_BOOKWORM='1'
 
 RUN apt-get update \
 	&& apt-get -y upgrade \

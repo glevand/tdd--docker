@@ -6,7 +6,7 @@ ENV LANG='C.UTF-8' \
 	LC_ALL='C.UTF-8' \
 	TDD_I386_RUNNER='1' \
 	TDD_I386_RUNNER_DEBIAN='1' \
-	TDD_I386_RUNNER_BULLSEYE='1'
+	TDD_I386_RUNNER_BOOKWORM='1'
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
 	&& DEBIAN_FRONTEND=noninteractive apt-get -y upgrade \

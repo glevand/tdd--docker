@@ -8,7 +8,7 @@ ENV LANG='C.UTF-8' \
 	LC_ALL='C.UTF-8' \
 	TDD_NET_SCANNER='1' \
 	TDD_NET_SCANNER_DEBIAN='1' \
-	TDD_NET_SCANNER_DEBIAN_BULLSEYE='1'
+	TDD_NET_SCANNER_DEBIAN_BOOKWORM='1'
 
 RUN echo 'deb-src http://deb.debian.org/debian bookworm main' >> /etc/apt/sources.list \
 	&& echo 'deb http://deb.debian.org/debian bookworm-backports main' >> /etc/apt/sources.list \

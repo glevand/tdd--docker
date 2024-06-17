@@ -26,7 +26,7 @@ DOCKER_TOP="$(realpath "${DOCKER_TOP:-${real_source%/*}/..}")"
 
 export project_name='i386-runner'
 export project_from='i386_debian'
-export project_description='Builds a i386 Debian 11 Bullseye based Docker image with libstdc++5 support.'
+export project_description='Builds a i386 Debian based Docker image with libstdc++5 support.'
 
 VERSION=${VERSION:-"3"}
 

@@ -8,7 +8,7 @@ ENV LANG='C.UTF-8' \
 	LC_ALL='C.UTF-8' \
 	SBU_BUILDER='1' \
 	SBU_BUILDER_DEBIAN='1' \
-	SBU_BUILDER_DEBIAN_BULLSEYE='1'
+	SBU_BUILDER_DEBIAN_BOOKWORM='1'
 
 RUN echo 'deb-src http://deb.debian.org/debian bookworm main' >> /etc/apt/sources.list \
 	&& DEBIAN_FRONTEND=noninteractive apt-get update \

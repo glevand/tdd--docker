@@ -8,7 +8,7 @@ ENV LANG='C.UTF-8' \
 	LC_ALL='C.UTF-8' \
 	TDD_YOCTO_BUILDER='1' \
 	TDD_YOCTO_BUILDER_DEBIAN='1' \
-	TDD_YOCTO_BUILDER_DEBIAN_BULLSEYE='1'
+	TDD_YOCTO_BUILDER_DEBIAN_BOOKWORM='1'
 
 RUN echo 'deb-src http://deb.debian.org/debian bookworm main' >> /etc/apt/sources.list \
 	&& echo 'deb http://deb.debian.org/debian bookworm-backports main' >> /etc/apt/sources.list \
@@ -49,7 +49,7 @@ RUN echo 'deb-src http://deb.debian.org/debian bookworm main' >> /etc/apt/source
 		libssl-dev \
 		libtspi-dev \
 		parallel \
-		pylint3 \
+		pylint \
 		python3 \
 		python3-git \
 		python3-jinja2 \
