@@ -227,6 +227,24 @@ docker_from_centos() {
 	esac
 }
 
+docker_from_debian_bookworm() {
+	local arch
+	arch="$(get_arch "$(uname -m)")"
+
+	case "${arch}" in
+	amd64)
+		DOCKER_FROM="${DOCKER_FROM:-debian}"
+		;;
+	arm64)
+		DOCKER_FROM="${DOCKER_FROM:-arm64v8/debian}"
+		;;
+	*)
+		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
+		exit 1
+		;;
+	esac
+}
+
 docker_from_debian_bullseye() {
 	local arch
 	arch="$(get_arch "$(uname -m)")"
@@ -394,7 +412,10 @@ set_docker_from() {
 		docker_from_centos
 		;;
 	debian)
-		docker_from_debian_bullseye
+		docker_from_debian_bookworm
+		;;
+	debian_bookworm)
+		docker_from_debian_bookworm
 		;;
 	debian_bullseye)
 		docker_from_debian_bullseye

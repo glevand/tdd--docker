@@ -10,7 +10,7 @@ ENV LANG='C.UTF-8' \
 	TDD_BUILDER_DEBIAN='1' \
 	TDD_BUILDER_DEBIAN_BULLSEYE='1'
 
-RUN echo 'deb-src http://deb.debian.org/debian bullseye main' >> /etc/apt/sources.list \
+RUN echo 'deb-src http://deb.debian.org/debian bookworm main' >> /etc/apt/sources.list \
 	&& DEBIAN_FRONTEND=noninteractive apt-get update \
 	&& DEBIAN_FRONTEND=noninteractive apt-get -y upgrade \
 	&& DEBIAN_FRONTEND=noninteractive apt-get -y install \
@@ -33,7 +33,6 @@ RUN echo 'deb-src http://deb.debian.org/debian bullseye main' >> /etc/apt/source
 		inotify-tools \
 		ipmitool \
 		isc-dhcp-server \
-		libdnet-dev \
 		libncurses5-dev \
 		libpcap-dev \
 		libssl-dev \
