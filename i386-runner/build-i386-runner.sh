@@ -28,7 +28,7 @@ export project_name='i386-runner'
 export project_from='i386_debian'
 export project_description='Builds a i386 Debian based Docker image with libstdc++5 support.'
 
-VERSION=${VERSION:-"3"}
+VERSION=${VERSION:-"4"}
 
 export extra_build_args='--platform=linux/386'
 

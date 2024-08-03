@@ -302,7 +302,7 @@ docker_from_i386_debian() {
 
 	case "${arch}" in
 	amd64)
-		DOCKER_FROM="${DOCKER_FROM:-i386/debian:bullseye}"
+		DOCKER_FROM="${DOCKER_FROM:-i386/debian:bookworm}"
 		;;
 	*)
 		echo "${script_name}: ERROR: Unknown arch '${arch}'" >&2
