@@ -6,7 +6,7 @@ usage() {
 	set +o xtrace
 
 	{
-		echo "${script_name} - Enter a running tdd-net-scanner container."
+		echo "${script_name} - Enter a running tdd-builder container."
 		echo "Usage: ${script_name} [flags] -- [command] [args]"
 		echo "Option flags:"
 		echo "  -n --container-name - Container name. Default: '${container_name}'."
